@@ -1,0 +1,9 @@
+logs-tf/*
+models-tf/*
+data-trial/*
+logs-trial/*
+*/__pycache__/*
+*/.ipynb_checkpoints/*
+*/*.pyc
+.idea/*
+*.py.swp
