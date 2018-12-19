@@ -26,10 +26,12 @@ Finally, use any of the `run` scripts in the root folder to run several trials o
 
 
 #### Requirements
-* [`python 3+`](https://www.python.org/download/releases/3.0/)
-* [`tensorflow 1.4.1+`](https://www.tensorflow.org/install/)
-* [`gym`](https://github.com/openai/gym/)
-* [`numpy`](https://docs.scipy.org/doc/numpy/user/install.html)
+* [`python 3.5+`](https://www.python.org/download/releases/3.0/)
+* [`tensorflow 1.12.0+`](https://www.tensorflow.org/install/)
+* [`tensorflow probability 0.5+`](https://www.tensorflow.org/probability/)
+* [`gym 0.10+`](https://github.com/openai/gym/)
+* [`numpy 1.15+`](https://docs.scipy.org/doc/numpy/user/install.html)
+* [`scipy 1.2+`](https://www.scipy.org/install.html)
 * [`matplotlib`](https://matplotlib.org/users/installing.html)
 
 You can also use other physics simulators, such as [Roboschool](https://github.com/openai/roboschool/), [PyBullet](https://pypi.org/project/pybullet/) and [MuJoCo](https://github.com/openai/mujoco-py/).

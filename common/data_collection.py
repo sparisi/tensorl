@@ -56,6 +56,12 @@ def collect_samples(env, policy, min_trans, max_trans_per_ep=np.inf, render=Fals
             data_array = data_array[:,None]
         paths[key] = data_array
     paths["nb_paths"] = nb_paths
+    paths["obs"] = np.atleast_2d(paths["obs"])
+    paths["nobs"] = np.atleast_2d(paths["nobs"])
+    paths["act"] = np.atleast_2d(paths["act"])
+    paths["rwd"] = np.atleast_2d(paths["rwd"])
+    paths["done"] = np.atleast_2d(paths["done"])
+    paths["iobs"] = np.atleast_2d(paths["iobs"])
     return paths
 
 

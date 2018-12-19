@@ -35,7 +35,7 @@ alg = import_module(alg_name)
 args = []
 for trial in range(n_trials):
     for env_name in env_list:
-        args.append((env_name, trial, trial))
+        args.append((env_name, trial, str(trial)))
 
 # submit jobs
 Parallel(n_jobs=n_jobs, verbose=0)((delayed(alg.main)(arg1,arg2,arg3) for (arg1,arg2,arg3) in args))

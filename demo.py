@@ -9,7 +9,7 @@ This demo shows:
 * how to save a summary to visualize the graph.
 '''
 
-import gym
+import gym, gym.spaces
 import tensorflow as tf
 import numpy as np
 import sys
@@ -41,7 +41,7 @@ def main(checkpoint_path=None):
     # build Q
     q           = Quadratic([tf.concat([obs, act], axis=1)], 1, 'q')
     loss_q      = tf.reduce_mean(0.5*tf.square( q.output[0] - targets ))
-    optimizer_q = tf.contrib.opt.ScipyOptimizerInterface(loss_q, method='SLSQP', var_list=q.vars)
+    optimizer_q = tf.contrib.opt.ScipyOptimizerInterface(loss_q, options={'maxiter': 100, 'disp': False, 'ftol': 0}, method='SLSQP', var_list=q.vars)
 
     # build policy
     mean        = Linear([obs], act_size, 'pi_mean', use_bias=False)
@@ -94,12 +94,12 @@ def main(checkpoint_path=None):
         session.run(optimize_pi, {obs: paths["obs"], pi.act: paths["act"], act: paths["act"]}) # train pi
 
         avg_rwd = env.env.avg_return(session.run(mean.vars)[0], gamma) # evaluate pi (LQR has a closed form solution if the policy is linear)
-        myplot.update(session.run(q.output[0], {obs: np.asmatrix(myplot.XY[:,0]).T, act: np.asmatrix(myplot.XY[:,1]).T})) # show Q
+        myplot.update(session.run(q.output[0], {obs: np.atleast_2d(myplot.XY[:,0]).T, act: np.atleast_2d(myplot.XY[:,1]).T})) # show Q
         myscatter.update(paths["obs"], paths["act"], R) # show samples
         print(itr, avg_rwd, flush=True)
 
         with open(logger_data.fullname, 'ab') as f:
-            np.savetxt(f, np.asmatrix(avg_rwd)) # save data
+            np.savetxt(f, np.atleast_2d(avg_rwd)) # save data
         saver.save(session, logger_model.fullname, global_step=itr) # save all variables
 
         itr += 1

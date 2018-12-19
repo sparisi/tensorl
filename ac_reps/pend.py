@@ -6,7 +6,7 @@ try:
     import pybullet_envs
 except ImportError:
     pass
-import gym
+import gym, gym.spaces
 import tensorflow as tf
 import numpy as np
 import sys
@@ -126,7 +126,7 @@ def main(seed=1, run_name=None):
         old_std = session.run(pi.std)
 
         # ML update
-        init_neg_lik = session.run(loss_pi, {pi.obs: np.asmatrix(paths["obs"]), pi.act: np.asmatrix(paths["act"]), pi.weights: w[:,None]})
+        init_neg_lik = session.run(loss_pi, {pi.obs: paths["obs"], pi.act: paths["act"], pi.weights: w[:,None]})
 
         # Weighted max lik policy update
         phi = session.run(mean.phi[0], {obs: paths["obs"]})
@@ -142,7 +142,7 @@ def main(seed=1, run_name=None):
         session.run(update_mean, {new_mean_ph: new_K.T})
         session.run(update_std, {new_std_ph: np.sqrt(np.diag(new_cov))[None,:]*1.001})
 
-        end_neg_lik = session.run(loss_pi, {pi.obs: np.asmatrix(paths["obs"]), pi.act: np.asmatrix(paths["act"]), pi.weights: w[:,None]})
+        end_neg_lik = session.run(loss_pi, {pi.obs: paths["obs"], pi.act: paths["act"], pi.weights: w[:,None]})
         actual_kl = pi.estimate_kl(paths["obs"], old_mean, old_std)
 
         # Plot V, REPS weights, and pi
@@ -150,15 +150,15 @@ def main(seed=1, run_name=None):
         angle = np.arctan2(paths["obs"][:,0], paths["obs"][:,1])
         ax_scatter.scatter(angle, paths["obs"][:,2], c=w)
         ax_scatter.set_title('REPS weights')
-        myplot.update(session.run(v.output[0], {obs: np.asmatrix(XY)}))
-        myplot_pi.update(session.run(mean.output[0], {obs: np.asmatrix(XY)}))
-        myplot_pi2.update(np.clip(session.run(mean.output[0], {obs: np.asmatrix(XY)}), -2, 2))
+        myplot.update(session.run(v.output[0], {obs: np.atleast_2d(XY)}))
+        myplot_pi.update(session.run(mean.output[0], {obs: np.atleast_2d(XY)}))
+        myplot_pi2.update(np.clip(session.run(mean.output[0], {obs: np.atleast_2d(XY)}), -2, 2))
 
         # Fast deterministic policy
-        bw = np.asmatrix(bw)
+        bw = np.atleast_2d(bw)
         P = session.run(mean.P)
         shift = session.run(mean.shift)
-        pi_det = lambda x: ( np.sin( (np.asmatrix(x)/bw).dot(P) + shift) ).dot(new_K.T[1:,:]) + new_K.T[0,:]
+        pi_det = lambda x: ( np.sin( (np.atleast_2d(x)/bw).dot(P) + shift) ).dot(new_K.T[1:,:]) + new_K.T[0,:]
 
         # Evaluate pi and print info
         avg_rwd = evaluate_policy(env_eval, policy=pi_det, min_paths=1000)
@@ -169,7 +169,7 @@ def main(seed=1, run_name=None):
             print('--------------------------------------------------------------------------', flush=True)
 
         with open(logger_data.fullname, 'ab') as f:
-            np.savetxt(f, np.asmatrix([avg_rwd, entr, kl, actual_kl]))
+            np.savetxt(f, np.atleast_2d([avg_rwd, entr, kl, actual_kl]))
 
     session.close()
 

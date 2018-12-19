@@ -12,7 +12,7 @@ try:
     import pybullet_envs
 except ImportError:
     pass
-import gym
+import gym, gym.spaces
 import tensorflow as tf
 import numpy as np
 import sys
@@ -117,7 +117,7 @@ def main(env_name, seed=1, run_name=None):
 
         # Run episode
         while not done_i:
-            act_i = np.squeeze(session.run(pi.output[0], {obs: np.asmatrix(obs_i)})) + action_noise()
+            act_i = np.squeeze(session.run(pi.output[0], {obs: np.atleast_2d(obs_i)})) + action_noise()
             nobs_i, rwd_i, done_i, _ = env.step(np.minimum(np.maximum(act_i, env.action_space.low), env.action_space.high))
 
             paths["obs"][data_idx,:] = obs_i
@@ -157,7 +157,7 @@ def main(env_name, seed=1, run_name=None):
                 td = session.run(loss_q, {obs: paths["obs"], act: paths["act"], rwd: paths["rwd"], done: paths["done"], nobs: paths["nobs"]})
                 print('%d   %.4f   %.4f' % (trans, avg_rwd, td), flush=True)
                 with open(logger.fullname, 'ab') as f:
-                    np.savetxt(f, np.asmatrix([avg_rwd, td])) # save data
+                    np.savetxt(f, np.atleast_2d([avg_rwd, td])) # save data
 
     session.close()
 

@@ -10,7 +10,7 @@ try:
     import pybullet_envs
 except ImportError:
     pass
-import gym
+import gym, gym.spaces
 import tensorflow as tf
 import numpy as np
 import sys
@@ -91,7 +91,7 @@ def main(env_name, seed=1, run_name=None):
             entr = pi.estimate_entropy(paths["obs"])
             print('%d   %.4f   %.4f' % (itr, avg_rwd, entr), flush=True)
             with open(logger.fullname, 'ab') as f:
-                np.savetxt(f, np.asmatrix([avg_rwd, entr])) # save data
+                np.savetxt(f, np.atleast_2d([avg_rwd, entr])) # save data
 
     session.close()
 

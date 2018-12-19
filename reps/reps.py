@@ -6,7 +6,7 @@ try:
     import pybullet_envs
 except ImportError:
     pass
-import gym
+import gym, gym.spaces
 import tensorflow as tf
 import numpy as np
 import sys
@@ -122,7 +122,7 @@ def main(env_name, seed=1, run_name=None):
 
         old_mean = session.run(pi.mean, {pi.obs: paths["obs"]})
         old_std = session.run(pi.std)
-        init_neg_lik = session.run(loss_pi, {pi.obs: np.asmatrix(paths["obs"]), pi.act: np.asmatrix(paths["act"]), pi.weights: w[:,None]})
+        init_neg_lik = session.run(loss_pi, {pi.obs: np.atleast_2d(paths["obs"]), pi.act: np.atleast_2d(paths["act"]), pi.weights: w[:,None]})
 
         # Weighted max lik policy update
         phi = session.run(mean.phi[0], {obs: paths["obs"]})
@@ -138,14 +138,14 @@ def main(env_name, seed=1, run_name=None):
         session.run(update_mean, {new_mean_ph: new_K.T})
         session.run(update_std, {new_std_ph: np.sqrt(np.diag(new_cov))[None,:]})
 
-        end_neg_lik = session.run(loss_pi, {pi.obs: np.asmatrix(paths["obs"]), pi.act: np.asmatrix(paths["act"]), pi.weights: w[:,None]})
+        end_neg_lik = session.run(loss_pi, {pi.obs: np.atleast_2d(paths["obs"]), pi.act: np.atleast_2d(paths["act"]), pi.weights: w[:,None]})
         actual_kl = pi.estimate_kl(paths["obs"], old_mean, old_std)
 
         # Fast deterministic policy
-        bw = np.asmatrix(bw)
+        bw = np.atleast_2d(bw)
         P = session.run(mean.P)
         shift = session.run(mean.shift)
-        pi_det = lambda x: ( np.sin( (np.asmatrix(x)/bw).dot(P) + shift) ).dot(new_K.T[1:,:]) + new_K.T[0,:]
+        pi_det = lambda x: ( np.sin( (np.atleast_2d(x)/bw).dot(P) + shift) ).dot(new_K.T[1:,:]) + new_K.T[0,:]
 
         # Evaluate pi and print info
         #avg_rwd = evaluate_policy(env_eval, policy=pi_det, min_paths=paths_eval)
@@ -156,7 +156,7 @@ def main(env_name, seed=1, run_name=None):
             print('--------------------------------------------------------------------------', flush=True)
 
         with open(logger_data.fullname, 'ab') as f:
-            np.savetxt(f, np.asmatrix([avg_rwd, entr, kl, actual_kl]))
+            np.savetxt(f, np.atleast_2d([avg_rwd, entr, kl, actual_kl]))
 
     session.close()
 

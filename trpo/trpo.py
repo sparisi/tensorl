@@ -10,7 +10,7 @@ try:
     import pybullet_envs
 except ImportError:
     pass
-import gym
+import gym, gym.spaces
 import tensorflow as tf
 import numpy as np
 import sys
@@ -118,7 +118,7 @@ def main(env_name, seed=1, run_name=None):
         kl = pi.estimate_kl(paths["obs"], old_mean, old_std)
         print('%d | %e -> %e   %e -> %e   %e   %e   %e   %e   ' % (itr, v_loss_before, v_loss_after, pi_loss_before, pi_loss_after, entr, kl, avg_rwd, mstde), flush=True)
         with open(logger.fullname, 'ab') as f:
-            np.savetxt(f, np.asmatrix([v_loss_before, v_loss_after, pi_loss_before, pi_loss_after, entr, kl, avg_rwd, mstde])) # save data
+            np.savetxt(f, np.atleast_2d([v_loss_before, v_loss_after, pi_loss_before, pi_loss_after, entr, kl, avg_rwd, mstde])) # save data
 
     session.close()
 

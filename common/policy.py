@@ -1,4 +1,5 @@
 import tensorflow as tf
+import tensorflow_probability as tfp
 import numpy as np
 
 
@@ -13,7 +14,7 @@ class RandPolicy:
         self.name = 'rand_policy_' + name
 
     def draw_action(self, obs):
-        return np.squeeze(np.random.normal(loc=0.0, scale=self.std, size=(np.asmatrix(obs).shape[0],self.act_size)))
+        return np.squeeze(np.random.normal(loc=0.0, scale=self.std, size=(np.atleast_2d(obs).shape[0],self.act_size)))
 
 
 
@@ -36,7 +37,7 @@ class MVNPolicy:
         self.act_bound = act_bound
         self.weights = tf.placeholder(dtype=obs.dtype, shape=[None, 1], name=name+'_weights') # for weighted max likelihood update
 
-        self.mvn = tf.contrib.distributions.MultivariateNormalDiag(self.mean, self.std)
+        self.mvn = tfp.distributions.MultivariateNormalDiag(self.mean, self.std)
         self.output = self.mvn.sample()
 
         self.entropy = tf.reduce_mean(self.mvn.entropy())
@@ -55,19 +56,19 @@ class MVNPolicy:
 
 
     def get_log_prob(self, obs, act):
-        return self.session.run(self.log_prob, {self.obs: np.asmatrix(obs), self.act: np.asmatrix(act)})
+        return self.session.run(self.log_prob, {self.obs: np.atleast_2d(obs), self.act: np.atleast_2d(act)})
 
     def estimate_entropy(self, obs):
-        return np.squeeze(self.session.run(self.entropy, {self.obs: np.asmatrix(obs)}))
+        return np.squeeze(self.session.run(self.entropy, {self.obs: np.atleast_2d(obs)}))
 
     def estimate_kl(self, obs, old_mean, old_std):
-        return np.squeeze(self.session.run(self.kl, {self.obs: np.asmatrix(obs), self.old_std: np.asmatrix(old_std), self.old_mean: np.asmatrix(old_mean)}))
+        return np.squeeze(self.session.run(self.kl, {self.obs: np.atleast_2d(obs), self.old_std: np.atleast_2d(old_std), self.old_mean: np.atleast_2d(old_mean)}))
 
     def draw_action(self, obs):
-        return np.squeeze(self.session.run(self.output, {self.obs: np.asmatrix(obs)}))
+        return np.squeeze(self.session.run(self.output, {self.obs: np.atleast_2d(obs)}))
 
     def draw_action_det(self, obs):
-        return np.squeeze(self.session.run(self.mean, {self.obs: np.asmatrix(obs)}) )
+        return np.squeeze(self.session.run(self.mean, {self.obs: np.atleast_2d(obs)}) )
 
 
 
@@ -90,7 +91,7 @@ def fast_policy(obs, mean_layers, std_layers=None, act_bound=np.inf):
 
     Example:
 
-        draw = lambda x : np.squeeze(session.run(mean.output[0], {obs: np.asmatrix(x)}))
+        draw = lambda x : np.squeeze(session.run(mean.output[0], {obs: np.atleast_2d(x)}))
         avg_rwd = evaluate_policy(env, draw, 1000)
 
         layers = session.run(mean.vars)
