@@ -66,5 +66,5 @@ You can also use other physics simulators, such as [Roboschool](https://github.c
 
 <br/>
 
-* [TD-Regularized Actor-Critic Methods](xxx) (TD-REG and GAE-REG) is implemented for PPO and TRPO.
+* [TD-Regularized Actor-Critic Methods](https://www.ias.informatik.tu-darmstadt.de/uploads/Team/SimoneParisi/parisi2019mlj.pdf) (TD-REG and GAE-REG) is implemented for PPO and TRPO.
 * [Curiosity-driven Exploration by Self-supervised Prediction](https://arxiv.org/abs/1705.05363) (ICM) is implemented for PPO.
