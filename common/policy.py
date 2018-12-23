@@ -35,16 +35,15 @@ class MVNPolicy:
         self.act_size = mean.get_shape().as_list()[1]
         self.std = std
         self.act_bound = act_bound
-        self.weights = tf.placeholder(dtype=obs.dtype, shape=[None, 1], name=name+'_weights') # for weighted max likelihood update
 
-        self.mvn = tfp.distributions.MultivariateNormalDiag(self.mean, self.std)
-        self.output = self.mvn.sample()
+        self.act_distr = tfp.distributions.MultivariateNormalDiag(self.mean, self.std)
+        self.output = self.act_dist.sample()
 
-        self.entropy = tf.reduce_mean(self.mvn.entropy())
+        self.entropy = tf.reduce_mean(self.act_dist.entropy())
         # self.entropy = 0.5 * tf.reduce_mean(self.act_size * (np.log(2.*np.pi) + 1.) + 2.*tf.reduce_sum(tf.log(self.std), axis=1))
 
         self.act = tf.placeholder(dtype=obs.dtype, shape=[None, self.act_size], name=name+'_act')
-        self.log_prob = tf.expand_dims(self.mvn.log_prob(self.act), axis=-1) # expand vector returned by log_prob to row vector
+        self.log_prob = tf.expand_dims(self.act_dist.log_prob(self.act), axis=-1) # expand vector returned by log_prob to row vector
         # self.log_prob = -0.5*tf.reduce_sum((self.mean - self.act)**2 / self.std**2 + 2.*tf.reduce_sum(tf.log(self.std)) + self.act_size*np.log(2.*np.pi), axis=1, keepdims=True)
 
         self.old_mean = tf.placeholder(dtype=obs.dtype, shape=[None, self.act_size], name=name+'_old_mean')
@@ -52,7 +51,6 @@ class MVNPolicy:
         self.kl = 0.5 * tf.reduce_mean(2.*tf.reduce_sum(tf.log(self.std), axis=1) - 2.*tf.reduce_sum(tf.log(self.old_std), axis=1) +
                                 tf.reduce_sum((self.mean - self.old_mean)**2 / self.std**2, axis=1) +
                                 tf.reduce_sum(self.old_std**2/self.std**2, axis=1) - self.act_size)
-
 
 
     def get_log_prob(self, obs, act):
@@ -70,6 +68,42 @@ class MVNPolicy:
     def draw_action_det(self, obs):
         return np.squeeze(self.session.run(self.mean, {self.obs: np.atleast_2d(obs)}) )
 
+
+
+
+class SoftmaxPolicy:
+    '''
+    pi(a_i|s) = exp(temp*Q(s,a_i)) / sum(temp*Q(s,a))
+    '''
+    def __init__(self, session, obs, q, n_act, log_temp=0., name='pi'):
+        self.session = session
+        self.name = 'softmax_policy_' + name
+        self.obs = obs
+        self.n_act = n_act
+        self.q = q
+
+        self.log_temp = tf.Variable(log_temp, name='pi_log_temp')
+        self.max_temp = tf.Variable(tf.exp(log_temp), trainable=False, name='pi_max_temp')
+        self.temp = tf.minimum(tf.exp(self.log_temp), self.max_temp)
+        self.action_map = tf.Variable(tf.ones([self.n_act, self.n_act]) / self.n_act, name='pi_action_map') # to ensure that the initial policy is uniform irrespective of Q or the temperature
+        self.act_logits = self.temp * tf.matmul(self.q, self.action_map)
+        self.act_dist = tfp.distributions.Categorical(logits=self.act_logits)
+        self.output = self.act_dist.sample()
+
+        self.entropy = tf.reduce_mean(self.act_dist.entropy())
+
+        self.act = tf.placeholder(dtype=obs.dtype, shape=[None, 1])
+        self.log_prob = tf.expand_dims(self.act_dist.log_prob(tf.squeeze(self.act, axis=-1)), axis=-1) # tf.expand_dims(self.act_dist.log_prob(self.act), axis=-1) # expand vector returned by log_prob to row vector
+
+
+    def draw_action(self, obs):
+        return np.squeeze(self.session.run(self.output, {self.obs: np.atleast_2d(obs)}))
+
+    def get_log_prob(self, obs, act):
+        return self.session.run(self.log_prob, {self.obs: np.atleast_2d(obs), self.act: np.atleast_2d(act)})
+
+    def estimate_entropy(self, obs):
+        return self.session.run(self.entropy, {self.obs: np.atleast_2d(obs)})
 
 
 

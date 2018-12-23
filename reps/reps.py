@@ -23,7 +23,7 @@ def main(env_name, seed=1, run_name=None):
         globals().update(config_env[env_name])
     except KeyError as e:
         print()
-        print('\033[93m No hyperparameters defined for \"' + env_name + '\". Using default one.\033[0m')
+        print('\033[93m No hyperparameters defined for \"' + env_name + '\". Using default ones.\033[0m')
         print()
         pass
 
@@ -68,9 +68,10 @@ def main(env_name, seed=1, run_name=None):
 
     # Build pi
     mean = Fourier([obs], act_size, n_fourier, 'pi_mean', bandwidth=bw)
+    weights = tf.placeholder(dtype=precision, shape=[None, 1], name='pi_weights') # for weighted max likelihood update
     with tf.variable_scope('pi_std'): std = tf.Variable(std_noise * tf.ones([1, act_size], dtype=precision), dtype=precision)
     pi = MVNPolicy(session, obs, mean.output[0], std) # with lin policy we don't bound the action, or we lose linearity and convexity
-    loss_pi = -tf.reduce_mean(pi.weights*pi.log_prob) #+ tf.reduce_mean([tf.nn.l2_loss((x)) for x in mean.vars+[std]])*0.00001 # weighted log-likelihood with l2 regularization
+    loss_pi = -tf.reduce_mean(weights*pi.log_prob) #+ tf.reduce_mean([tf.nn.l2_loss((x)) for x in mean.vars+[std]])*0.00001 # weighted log-likelihood with l2 regularization
 
     # Define pi update ops
     new_mean_ph = tf.placeholder(dtype=precision, shape=mean.vars[0].get_shape().as_list(), name='new_mean')
@@ -122,7 +123,7 @@ def main(env_name, seed=1, run_name=None):
 
         old_mean = session.run(pi.mean, {pi.obs: paths["obs"]})
         old_std = session.run(pi.std)
-        init_neg_lik = session.run(loss_pi, {pi.obs: np.atleast_2d(paths["obs"]), pi.act: np.atleast_2d(paths["act"]), pi.weights: w[:,None]})
+        init_neg_lik = session.run(loss_pi, {pi.obs: np.atleast_2d(paths["obs"]), pi.act: np.atleast_2d(paths["act"]), weights: w[:,None]})
 
         # Weighted max lik policy update
         phi = session.run(mean.phi[0], {obs: paths["obs"]})
@@ -138,7 +139,7 @@ def main(env_name, seed=1, run_name=None):
         session.run(update_mean, {new_mean_ph: new_K.T})
         session.run(update_std, {new_std_ph: np.sqrt(np.diag(new_cov))[None,:]})
 
-        end_neg_lik = session.run(loss_pi, {pi.obs: np.atleast_2d(paths["obs"]), pi.act: np.atleast_2d(paths["act"]), pi.weights: w[:,None]})
+        end_neg_lik = session.run(loss_pi, {pi.obs: np.atleast_2d(paths["obs"]), pi.act: np.atleast_2d(paths["act"]), weights: w[:,None]})
         actual_kl = pi.estimate_kl(paths["obs"], old_mean, old_std)
 
         # Fast deterministic policy

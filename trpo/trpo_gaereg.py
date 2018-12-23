@@ -1,7 +1,3 @@
-'''
-Trust region policy optimization https://arxiv.org/abs/1502.05477
-'''
-
 try:
     import roboschool
 except ImportError:
@@ -25,7 +21,7 @@ def main(env_name, seed=1, run_name=None):
         globals().update(config_env[env_name])
     except KeyError as e:
         print()
-        print('\033[93m No hyperparameters defined for \"' + env_name + '\". Using default one.\033[0m')
+        print('\033[93m No hyperparameters defined for \"' + env_name + '\". Using default ones.\033[0m')
         print()
         pass
 
