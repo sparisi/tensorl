@@ -45,8 +45,8 @@ def main(env_name, seed=1, run_name=None):
     obs = tf.placeholder(dtype=precision, shape=[None, obs_size], name='obs')
 
     # Build pi
-    q = MLP([obs], v_sizes+[act_size], pi_activations+[None], 'q')
-    pi = SoftmaxPolicy(session, obs, q.output[0], act_size)
+    f = MLP([obs], pi_sizes+[act_size], pi_activations+[None], 'f')
+    pi = SoftmaxPolicy(session, obs, f.output[0], act_size)
 
     # Build V
     v = MLP([obs], v_sizes+[1], v_activations+[None], 'v')
@@ -66,7 +66,7 @@ def main(env_name, seed=1, run_name=None):
 
     # Init variables
     session.run(tf.global_variables_initializer())
-    q.reset(session, 0.)
+    # better not to initialize f to 0
     v.reset(session, 0.)
 
     logger = LoggerData('ppo_d', env_name, run_name)
@@ -75,11 +75,6 @@ def main(env_name, seed=1, run_name=None):
     for itr in range(maxiter):
         paths = collect_samples(env, policy=pi.draw_action, min_trans=min_trans_per_iter)
         nb_trans = len(paths["rwd"])
-
-        q_values = session.run(q.output[0], {obs: np.atleast_2d(paths["obs"])})
-    #    print(qq[range(nb_trans),paths["act"].flatten()].shape)
-
-
 
         # Update V
         for epoch in range(epochs_v):
@@ -100,7 +95,6 @@ def main(env_name, seed=1, run_name=None):
 
         a_values = (a_values - np.mean(a_values)) / np.std(a_values)
 
-
         # Udpate pi
         old_lp = pi.get_log_prob(paths["obs"], paths["act"])
         pi_loss_before = session.run(loss_pi, {obs: paths["obs"], pi.act: paths["act"], old_log_probs: old_lp, advantage: a_values})
@@ -110,8 +104,6 @@ def main(env_name, seed=1, run_name=None):
                             pi.act: paths["act"][batch_idx],
                             old_log_probs: old_lp[batch_idx],
                             advantage: a_values[batch_idx]}
-
-
                 session.run(optimize_pi, dct_pi)
         pi_loss_after = session.run(loss_pi, {obs: paths["obs"], pi.act: paths["act"], old_log_probs: old_lp, advantage: a_values})
 
