@@ -73,7 +73,7 @@ def main(env_name, seed=1, run_name=None):
     print()
     print('    V LOSS                         PI LOSS                        ENTROPY        RETURN          MSTDE')
     for itr in range(maxiter):
-        paths = collect_samples(env, policy=pi.draw_action, min_trans=min_trans_per_iter)
+        paths = collect_samples(env, policy=pi.draw_action, min_trans=min_trans_per_iter, clip_act=False)
         nb_trans = len(paths["rwd"])
 
         # Update V
@@ -110,7 +110,7 @@ def main(env_name, seed=1, run_name=None):
         # Evaluate pi
         # layers_m = session.run(mean.vars)
         # draw_fast = lambda x : fast_policy(x, layers_m, act_bound=act_bound)
-        # avg_rwd = evaluate_policy(env, policy=draw_fast, min_paths=paths_eval)
+        # avg_rwd = evaluate_policy(env, policy=draw_fast, min_paths=paths_eval, clip_act=False)
         avg_rwd = np.sum(paths["rwd"]) / paths["nb_paths"]
         entr = pi.estimate_entropy(paths["obs"])
         print('%d | %e -> %e   %e -> %e   %e   %e   %e   ' % (itr, v_loss_before, v_loss_after, pi_loss_before, pi_loss_after, entr, avg_rwd, mstde), flush=True)

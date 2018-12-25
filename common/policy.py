@@ -36,7 +36,7 @@ class MVNPolicy:
         self.std = std
         self.act_bound = act_bound
 
-        self.act_distr = tfp.distributions.MultivariateNormalDiag(self.mean, self.std)
+        self.act_dist = tfp.distributions.MultivariateNormalDiag(self.mean, self.std)
         self.output = self.act_dist.sample()
 
         self.entropy = tf.reduce_mean(self.act_dist.entropy())
@@ -85,7 +85,7 @@ class SoftmaxPolicy:
         self.log_temp = tf.Variable(log_temp, trainable=False, name='pi_log_temp')
         self.max_temp = tf.Variable(tf.exp(log_temp), trainable=False, name='pi_max_temp')
         self.temp = tf.minimum(tf.exp(self.log_temp), self.max_temp)
-        self.action_map = tf.Variable(tf.ones([self.n_act, self.n_act]) / self.n_act, name='pi_action_map') # to ensure that the initial policy is uniform irrespective of Q or the temperature
+        self.action_map = tf.Variable(tf.ones([self.n_act, self.n_act]) / self.n_act, name='pi_action_map') # normalization factor to ensure that the initial policy is uniform irrespective of f or the temperature
         self.act_logits = self.temp * tf.matmul(self.f, self.action_map)
         self.act_dist = tfp.distributions.Categorical(logits=self.act_logits)
         self.output = self.act_dist.sample()
