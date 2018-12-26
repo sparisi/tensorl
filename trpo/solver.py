@@ -13,23 +13,23 @@ def flatgrad(loss, var_list):
 
 
 class TRPO:
-    def __init__(self, session, adv, pi, loss_pi, vars_pi, old_log_prob, kl_bound=1e-2, cg_damping=1e-1):
+    def __init__(self, session, loss_pi, kl_pi, vars_pi, kl_bound=1e-2, cg_damping=1e-1):
         self.session = session
-        self.adv = adv
-        self.pi = pi
-        self.old_log_prob = old_log_prob
+        self.kl = kl_pi
         self.params = vars_pi
         self.loss = loss_pi
         self.kl_bound = kl_bound
         self.cg_damping = cg_damping
         self.pg = flatgrad(self.loss, self.params)
 
+        precision = vars_pi[0].dtype
+
         # First, get the tensor for the gradient-vector-product (gvp)
         # Then, get its derivative, that is the hessian-vector-product (hvp)
         self.shapes = [v.shape.as_list() for v in self.params]
         self.size_params = np.sum([np.prod(shape) for shape in self.shapes])
-        self.p = tf.placeholder(self.adv.dtype, (self.size_params,)) # the vector
-        grads = tf.gradients(self.pi.kl, self.params)
+        self.p = tf.placeholder(precision, (self.size_params,)) # the vector
+        grads = tf.gradients(self.kl, self.params)
         tangents = []
         start = 0
         for shape in self.shapes:
@@ -41,7 +41,7 @@ class TRPO:
 
         # Update operations (reshape flat params and assign new value)
         self.flat_params = tf.concat([tf.reshape(param, [-1]) for param in self.params], axis=0)
-        self.flat_params_place = tf.placeholder(self.adv.dtype, (self.size_params,))
+        self.flat_params_place = tf.placeholder(precision, (self.size_params,))
         self.assign_weights_ops = []
         start = 0
         assert len(self.params) == len(self.shapes), "Wrong shapes."
@@ -60,14 +60,7 @@ class TRPO:
         return self.session.run(self.flat_params)
 
 
-    def step(self, obs, act, adv, old_log_prob, old_mean, old_std):
-        dct = {self.pi.obs: obs,
-                self.pi.act: act,
-                self.adv: adv,
-                self.pi.old_mean: old_mean,
-                self.pi.old_std: old_std,
-                self.old_log_prob: old_log_prob}
-
+    def step(self, dct):
         prev_params = self.get_flat_params()
 
         def get_pg():
@@ -79,7 +72,7 @@ class TRPO:
 
         def get_loss(params):
             self.assign_vars(params)
-            return self.session.run([self.loss, self.pi.kl], dct)
+            return self.session.run([self.loss, self.kl], dct)
 
         pg = get_pg() # vanilla gradient
         if np.allclose(pg, 0):

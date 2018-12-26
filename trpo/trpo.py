@@ -65,7 +65,7 @@ def main(env_name, seed=1, run_name=None):
     old_log_probs = tf.placeholder(dtype=precision, shape=[None, 1], name='old_log_probs')
     prob_ratio = tf.exp(pi.log_prob - old_log_probs)
     loss_pi = -tf.reduce_mean(tf.multiply(prob_ratio, advantage))
-    solver = TRPO(session, advantage, pi, loss_pi, mean.vars+[std], old_log_probs, kl_bound=kl_bound, cg_damping=cg_damping)
+    solver = TRPO(session, loss_pi, pi.kl, mean.vars+[std], kl_bound=kl_bound, cg_damping=cg_damping)
 
     # Init variables
     session.run(tf.global_variables_initializer())
@@ -102,7 +102,7 @@ def main(env_name, seed=1, run_name=None):
         old_mean = session.run(pi.mean, {pi.obs: paths["obs"]})
         old_std = np.tile(session.run(pi.std), (len(paths["rwd"]), 1))
         pi_loss_before = session.run(loss_pi, {obs: paths["obs"], pi.act: paths["act"], old_log_probs: old_lp, advantage: a_values})
-        solver.step(paths["obs"], paths["act"], a_values, old_lp, old_mean, old_std)
+        solver.step({obs: paths["obs"], pi.act: paths["act"], advantage: a_values, old_log_probs: old_lp, pi.old_mean: old_mean, pi.old_std: old_std})
         pi_loss_after = session.run(loss_pi, {obs: paths["obs"], pi.act: paths["act"], old_log_probs: old_lp, advantage: a_values})
 
         # Evaluate pi
