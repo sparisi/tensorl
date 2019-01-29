@@ -1,3 +1,7 @@
+'''
+PPO for discrete action and continuous state.
+'''
+
 try:
     import roboschool
 except ImportError:
@@ -64,12 +68,11 @@ def main(env_name, seed=1, run_name=None):
     loss_pi = -tf.reduce_mean(tf.minimum(tf.multiply(prob_ratio, advantage), tf.multiply(clip_pr, advantage)))
     optimize_pi = tf.train.AdamOptimizer(lrate_pi).minimize(loss_pi)
 
-    # Init variables
+    # Init variables (better not to initialize f to 0)
     session.run(tf.global_variables_initializer())
-    # better not to initialize f to 0
     v.reset(session, 0.)
 
-    logger = LoggerData('ppo_d', env_name, run_name)
+    logger = LoggerData('ppo_discrete', env_name, run_name)
     print()
     print('    V LOSS                         PI LOSS                        ENTROPY        RETURN          MSTDE')
     for itr in range(maxiter):

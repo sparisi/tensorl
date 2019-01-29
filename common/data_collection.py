@@ -14,9 +14,10 @@ def rollout(env, policy, max_trans_per_ep=np.inf, clip_act=True, render=False):
         if render:
             env.render()
         act = policy(obs)
-        if clip_act: 
-            act = np.minimum(np.maximum(act, env.action_space.low), env.action_space.high)
-        nobs, rwd, done, _ = env.step(act)
+        if clip_act:
+            nobs, rwd, done, _ = env.step(np.clip(act, env.action_space.low, env.action_space.high))
+        else:
+            nobs, rwd, done, _ = env.step(act)
         trans += 1
         if trans >= max_trans_per_ep: # Override environment max steps if we want to run the episode for LESS steps than the default horizon
             done = True
