@@ -2,7 +2,7 @@ import gym
 import numpy as np
 
 
-def rollout(env, policy, max_trans_per_ep=np.inf, render=False):
+def rollout(env, policy, max_trans_per_ep=np.inf, clip_act=True, render=False):
     '''
     Generates transitions until the episode ends.
     '''
@@ -14,7 +14,10 @@ def rollout(env, policy, max_trans_per_ep=np.inf, render=False):
         if render:
             env.render()
         act = policy(obs)
-        nobs, rwd, done, _ = env.step(np.minimum(np.maximum(act, env.action_space.low), env.action_space.high))
+        if clip_act:
+            nobs, rwd, done, _ = env.step(np.clip(act, env.action_space.low, env.action_space.high))
+        else:
+            nobs, rwd, done, _ = env.step(act)
         trans += 1
         if trans >= max_trans_per_ep: # Override environment max steps if we want to run the episode for LESS steps than the default horizon
             done = True
@@ -22,7 +25,7 @@ def rollout(env, policy, max_trans_per_ep=np.inf, render=False):
         obs = nobs
 
 
-def collect_samples(env, policy, min_trans, max_trans_per_ep=np.inf, render=False):
+def collect_samples(env, policy, min_trans, max_trans_per_ep=np.inf, clip_act=True, render=False):
     '''
     Keeps calling rollout and saving the resulting path until at least min_trans transitions are collected.
     Returns the following data (everything is a 2D array):
@@ -43,7 +46,7 @@ def collect_samples(env, policy, min_trans, max_trans_per_ep=np.inf, render=Fals
     paths["nb_steps"] = []
     while len(paths["rwd"]) < min_trans:
         nb_steps = 0
-        for trans_vect in rollout(env, policy, max_trans_per_ep, render):
+        for trans_vect in rollout(env, policy, max_trans_per_ep, clip_act, render):
             for key, val in zip(keys, trans_vect):
                 if (key == "iobs" and nb_steps == 0) or (key != "iobs"): # initial obs (iobs) are stored only once
                     paths[key].append(val)
@@ -65,14 +68,14 @@ def collect_samples(env, policy, min_trans, max_trans_per_ep=np.inf, render=Fals
     return paths
 
 
-def evaluate_policy(env, policy, min_paths, render=False):
+def evaluate_policy(env, policy, min_paths, clip_act=True, render=False):
     '''
     Runs the desired number of rollouts (aka, episodes or paths) to estimate the average return of a policy.
     '''
     tot_rwd = 0.
     nb_paths = 0
     while nb_paths < min_paths:
-        for trans_vect in rollout(env, policy, render=render):
+        for trans_vect in rollout(env, policy, clip_act=clip_act, render=render):
             tot_rwd += trans_vect[3]
         nb_paths += 1
     return tot_rwd / nb_paths

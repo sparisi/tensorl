@@ -44,7 +44,7 @@ You can also use other physics simulators, such as [Roboschool](https://github.c
 * `logger.py`          : creates folders for saving data
 * `noise.py`           : noise functions
 * `plotting.py`        : to plot value functions
-* `policy.py`          : implementation of Gaussian policy
+* `policy.py`          : implementation of common policies
 * `rl_utils.py`        : RL functions, such as [generalized advantage estimation](https://arxiv.org/abs/1506.02438) and [Retrace](https://arxiv.org/pdf/1606.02647.pdf)
 
 #### Custom environment

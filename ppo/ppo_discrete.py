@@ -1,3 +1,7 @@
+'''
+PPO for discrete action and continuous state.
+'''
+
 try:
     import roboschool
 except ImportError:
@@ -20,7 +24,7 @@ def main(env_name, seed=1, run_name=None):
         globals().update(config_env[env_name])
     except KeyError as e:
         print()
-        print('\033[93m No hyperparameters defined for \"' + env_name + '\". Using default ones.\033[0m')
+        print('\033[93m No hyperparameters defined for \"' + env_name + '\". Using default one.\033[0m')
         print()
         pass
 
@@ -41,19 +45,12 @@ def main(env_name, seed=1, run_name=None):
 
     # Init placeholders
     obs_size = env.observation_space.shape[0]
-    act_size = env.action_space.shape[0]
+    act_size = env.action_space.n
     obs = tf.placeholder(dtype=precision, shape=[None, obs_size], name='obs')
-    nobs = tf.placeholder(dtype=precision, shape=[None, obs_size], name='nobs')
 
     # Build pi
-    act_bound = np.asscalar(env.action_space.high[0])
-    assert act_bound == -np.asscalar(env.action_space.low[0])
-    mean = MLP([obs], pi_sizes+[act_size], pi_activations+[None], 'pi_mean')
-    with tf.variable_scope('pi_std'): std = tf.Variable(std_noise * tf.ones([1, act_size], dtype=precision), dtype=precision)
-    pi = MVNPolicy(session, obs, mean.output[0], std, act_bound=act_bound)
-
-    # Build forward dynamics
-    fwd = MLP([tf.concat([obs,pi.act],axis=1)], fwd_sizes+[obs_size], fwd_activations+[None], 'fwd')
+    f = MLP([obs], pi_sizes+[act_size], pi_activations+[None], 'f')
+    pi = SoftmaxPolicy(session, obs, f.output[0], act_size)
 
     # Build V
     v = MLP([obs], v_sizes+[1], v_activations+[None], 'v')
@@ -71,33 +68,16 @@ def main(env_name, seed=1, run_name=None):
     loss_pi = -tf.reduce_mean(tf.minimum(tf.multiply(prob_ratio, advantage), tf.multiply(clip_pr, advantage)))
     optimize_pi = tf.train.AdamOptimizer(lrate_pi).minimize(loss_pi)
 
-    # Forward dynamics optimization
-    loss_fwd = tf.losses.mean_squared_error(fwd.output[0], nobs)
-    optimize_fwd = tf.train.AdamOptimizer(lrate_fwd).minimize(loss_fwd)
-
-    # Define curiosity
-    curiosity = tf.reduce_mean(tf.square(fwd.output[0] - nobs), axis=1)
-
-    # Init variables
+    # Init variables (better not to initialize f to 0)
     session.run(tf.global_variables_initializer())
-    mean.reset(session, 0.)
     v.reset(session, 0.)
 
-    logger = LoggerData('ppo_icm', env_name, run_name)
+    logger = LoggerData('ppo_discrete', env_name, run_name)
     print()
-    print('    V LOSS                         PI LOSS                        ENTROPY        RETURN')
+    print('    V LOSS                         PI LOSS                        ENTROPY        RETURN          MSTDE')
     for itr in range(maxiter):
-        paths = collect_samples(env, policy=pi.draw_action, min_trans=min_trans_per_iter)
-        dct_models = {obs: paths["obs"], pi.act: paths["act"], nobs: paths["nobs"]}
+        paths = collect_samples(env, policy=pi.draw_action, min_trans=min_trans_per_iter, clip_act=False)
         nb_trans = len(paths["rwd"])
-
-        # Update dynamics models
-        for epoch in range(epochs_fwd):
-            if epoch == 0:
-                fwd_loss_before = session.run(loss_fwd, dct_models)
-            for batch_idx in minibatch_idx_list(batch_size, len(paths["rwd"])):
-                session.run(optimize_fwd, {obs: paths["obs"][batch_idx], pi.act: paths["act"][batch_idx], nobs: paths["nobs"][batch_idx]})
-        fwd_loss_after = session.run(loss_fwd, dct_models)
 
         # Update V
         for epoch in range(epochs_v):
@@ -110,14 +90,12 @@ def main(env_name, seed=1, run_name=None):
                 session.run(optimize_v, {obs: paths["obs"][batch_idx], target_v: target_values[batch_idx]})
         v_loss_after = session.run(loss_v, {obs: paths["obs"], target_v: target_values})
 
-        # Estimate advantages and intrinsic curiosity (ic)
+        # Estimate advantages and TD error
         v_values = session.run(v.output[0], {obs: paths["obs"]})
         a_values = gae(paths, v_values, gamma, lambda_trace)
-        a_values = (a_values - np.mean(a_values)) / np.std(a_values)
-        ic_values = np.asarray(session.run(curiosity, dct_models))[:,None]
-        ic_values = (ic_values - np.mean(ic_values)) / np.std(ic_values)
+        td_values = gae(paths, v_values, gamma, 0)
+        mstde = np.mean(td_values**2)
 
-        a_values = a_values + beta * ic_values # add curiosity
         a_values = (a_values - np.mean(a_values)) / np.std(a_values)
 
         # Udpate pi
@@ -133,11 +111,14 @@ def main(env_name, seed=1, run_name=None):
         pi_loss_after = session.run(loss_pi, {obs: paths["obs"], pi.act: paths["act"], old_log_probs: old_lp, advantage: a_values})
 
         # Evaluate pi
+        # layers_m = session.run(mean.vars)
+        # draw_fast = lambda x : fast_policy(x, layers_m, act_bound=act_bound)
+        # avg_rwd = evaluate_policy(env, policy=draw_fast, min_paths=paths_eval, clip_act=False)
         avg_rwd = np.sum(paths["rwd"]) / paths["nb_paths"]
         entr = pi.estimate_entropy(paths["obs"])
-        print('%d | %e -> %e   %e -> %e   %e   %e   ' % (itr, v_loss_before, v_loss_after, pi_loss_before, pi_loss_after, entr, avg_rwd), flush=True)
+        print('%d | %e -> %e   %e -> %e   %e   %e   %e   ' % (itr, v_loss_before, v_loss_after, pi_loss_before, pi_loss_after, entr, avg_rwd, mstde), flush=True)
         with open(logger.fullname, 'ab') as f:
-            np.savetxt(f, np.atleast_2d([fwd_loss_before, fwd_loss_after, v_loss_before, v_loss_after, pi_loss_before, pi_loss_after, entr, avg_rwd])) # save data
+            np.savetxt(f, np.atleast_2d([v_loss_before, v_loss_after, pi_loss_before, pi_loss_after, entr, avg_rwd, mstde])) # save data
 
     session.close()
 
