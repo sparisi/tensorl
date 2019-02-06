@@ -12,6 +12,7 @@ filter_env         = False      # True to normalize actions and states to [-1,1]
 reset_prob         = 0.01       # reset probabiliy for infinite horizon
 std_noise          = 2.        # Gaussian policy std
 n_fourier          = 500       # number of Fourier features
+l2reg              = 0.0      # l2 regularization
 
 config_env = {
     'MountainCarContinuous-v0' : {

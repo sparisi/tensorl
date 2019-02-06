@@ -1,11 +1,9 @@
 import tensorflow as tf
 import numpy as np
 
-from common.data_collection import *
-
 class REPS:
 
-    def __init__(self, session, epsilon, v, obs, nobs, iobs, rwd, scipy_iter=100, verbose=False):
+    def __init__(self, session, epsilon, v, obs, nobs, iobs, rwd, scipy_iter=100, l2reg=0.0, verbose=False):
         self.verbose = verbose
         self.session = session
         self.epsilon = epsilon
@@ -19,7 +17,7 @@ class REPS:
         self.rwd = rwd
         self.adv = self.rwd + self.gamma*self.v.output[1] + (1.-self.gamma)*tf.reduce_mean(self.v.output[2]) - self.v.output[0]
         self.w = tf.exp(1./self.eta * (self.adv - tf.reduce_max(self.adv)))
-        self.dual = self.eta * self.epsilon + self.eta * tf.log(tf.reduce_mean(self.w)) + tf.reduce_max(self.adv) # + tf.reduce_mean([tf.nn.l2_loss((x)) for x in self.v.vars])*0.00001
+        self.dual = self.eta * self.epsilon + self.eta * tf.log(tf.reduce_mean(self.w)) + tf.reduce_max(self.adv) + tf.reduce_mean([tf.nn.l2_loss((x)) for x in self.v.vars])*l2reg
         self.optimizer = tf.contrib.opt.ScipyOptimizerInterface(self.dual,
                                               options={'maxiter': scipy_iter, 'disp': False, 'ftol': 0},
                                               method='SLSQP',
@@ -43,7 +41,7 @@ class REPS:
 
             dual = self.session.run(self.dual, dct)
             eta = self.session.run(self.eta)
-            msadv = np.mean(self.session.run(self.adv, dct)**2)
+            msadv = np.mean(self.session.run(self.adv, dct)**2) # mean squared advantage
 
             mu_diff = gamma*nobs + (1.-gamma)*np.mean(iobs,axis=0) - obs
             mu_std = np.std(obs,axis=0)

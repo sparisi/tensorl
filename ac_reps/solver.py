@@ -1,8 +1,6 @@
 import tensorflow as tf
 import numpy as np
 
-from common.data_collection import *
-
 class ACREPS:
     '''
     AC-REPS finds the temperature eta and the V-function maximizing E[A], with

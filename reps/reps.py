@@ -31,7 +31,7 @@ def main(env_name, seed=1, run_name=None):
     env = gym.make(env_name)
     if filter_env:
         env = make_filtered_env(env)
-    env_eval = gym.make(env_name) # make a copy of env for evaluation
+    env_eval = gym.make(env_name) # make a copy of env for evaluation (without state resets)
     env._max_episode_steps = min_trans_per_iter # increase the time horizon
     env = make_average_env(env, reset_prob) # introduce state resets
 
@@ -70,8 +70,8 @@ def main(env_name, seed=1, run_name=None):
     mean = Fourier([obs], act_size, n_fourier, 'pi_mean', bandwidth=bw)
     weights = tf.placeholder(dtype=precision, shape=[None, 1], name='pi_weights') # for weighted max likelihood update
     with tf.variable_scope('pi_std'): std = tf.Variable(std_noise * tf.ones([1, act_size], dtype=precision), dtype=precision)
-    pi = MVNPolicy(session, obs, mean.output[0], std) # with lin policy we don't bound the action, or we lose linearity and convexity
-    loss_pi = -tf.reduce_mean(weights*pi.log_prob) #+ tf.reduce_mean([tf.nn.l2_loss((x)) for x in mean.vars+[std]])*0.00001 # weighted log-likelihood with l2 regularization
+    pi = MVNPolicy(session, obs, mean.output[0], std) # with lin policy we do not bound the action, or we lose linearity and convexity
+    loss_pi = -tf.reduce_mean(weights*pi.log_prob) + tf.reduce_mean([tf.nn.l2_loss((x)) for x in mean.vars+[std]])*l2reg # weighted log-likelihood with l2 regularization
 
     # Define pi update ops
     new_mean_ph = tf.placeholder(dtype=precision, shape=mean.vars[0].get_shape().as_list(), name='new_mean')
