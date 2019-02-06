@@ -117,11 +117,11 @@ def main(env_name, seed=1, run_name=None):
             # draw_fast = lambda x : fast_policy(x, layers_m)
             # avg_rwd = evaluate_policy(env, policy=pi.draw_action_det, min_paths=paths_eval)
             avg_rwd = np.sum(paths["rwd"]) / paths["nb_paths"]
-            td = session.run(loss_q, {obs: paths["obs"], act: paths["act"], rwd: paths["rwd"], nobs: paths["nobs"], nact: paths["nact"], done: paths["done"]})
+            mstde = session.run(loss_q, {obs: paths["obs"], act: paths["act"], rwd: paths["rwd"], nobs: paths["nobs"], nact: paths["nact"], done: paths["done"]})
             entr = pi.estimate_entropy(paths["obs"])
-            print('%d   %.4f   %.4f   %.e' % (itr, avg_rwd, entr, td), flush=True)
+            print('%d   %.4f   %.4f   %.e' % (itr, avg_rwd, entr, mstde), flush=True)
             with open(logger.fullname, 'ab') as f:
-                np.savetxt(f, np.atleast_2d([avg_rwd, entr, td])) # save data
+                np.savetxt(f, np.atleast_2d([avg_rwd, entr, mstde])) # save data
 
     session.close()
 

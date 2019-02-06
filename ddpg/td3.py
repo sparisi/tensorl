@@ -177,10 +177,10 @@ def main(env_name, seed=1, run_name=None):
                 layers = session.run(pi.vars)
                 pi_det = lambda x : fast_policy(x, layers)
                 avg_rwd = evaluate_policy(env, pi_det, paths_eval, render=False)
-                td = session.run(loss_q1, {obs: paths["obs"], act: paths["act"], nact: paths["nact"], rwd: paths["rwd"], done: paths["done"], nobs: paths["nobs"]})
-                print('%d   %.4f   %.4f' % (trans, avg_rwd, td), flush=True)
+                mstde = session.run(loss_q1, {obs: paths["obs"], act: paths["act"], nact: paths["nact"], rwd: paths["rwd"], done: paths["done"], nobs: paths["nobs"]})
+                print('%d   %.4f   %.4f' % (trans, avg_rwd, mstde), flush=True)
                 with open(logger.fullname, 'ab') as f:
-                    np.savetxt(f, np.atleast_2d([avg_rwd, td])) # save data
+                    np.savetxt(f, np.atleast_2d([avg_rwd, mstde])) # save data
 
     session.close()
 
