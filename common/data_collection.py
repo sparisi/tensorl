@@ -95,18 +95,18 @@ def merge_paths(paths_list):
     return paths
 
 
-def minibatch_idx(batch_size, dataset_size):
+def minibatch_idx(batch_size, dataset_size, probs=None):
     '''
     Selects a single mini-batch from a bigger dataset.
     '''
-    return np.random.choice(dataset_size, batch_size, replace=False)
+    return np.random.choice(dataset_size, batch_size, replace=False, p=probs)
 
 
-def minibatch_idx_list(batch_size, dataset_size):
+def minibatch_idx_list(batch_size, dataset_size, probs=None):
     '''
     Splits the whole dataset into many mini-batches.
     '''
-    batch_idx_list = np.random.choice(dataset_size, dataset_size, replace=False)
+    batch_idx_list = np.random.choice(dataset_size, dataset_size, replace=False, p=probs)
     for batch_start in range(0, dataset_size, batch_size):
         yield batch_idx_list[batch_start:min(batch_start + batch_size, dataset_size)]
 
