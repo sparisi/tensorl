@@ -3,7 +3,7 @@ Script to plot data generated with one on the run scripts (run_slurm, run_multip
 It first loads .dat files and read data according to the specified column index.
 Then it plots the (moving) average with 95% confidence interval.
 
-Some lines should be changed according to your needs (x ticks, legend position, ...).
+Change style, legend position, x ticks, ... according to your needs.
 '''
 
 import os
@@ -75,7 +75,6 @@ if __name__ == '__main__':
         shaded_plot(ax, data, color=color)
 
     # CHANGE IT!
-    plt.xlim = ([0, 30])
     plt.xticks([0, 2000, 4000, 6000, 8000, 10000], ['0', '2', '4', '6', '8', '10'])
     leg = plt.legend(handles=ax.lines, labels=args.l, loc='lower left')
 
