@@ -1,5 +1,5 @@
 '''
-Script to plot data generated with one on the run scripts (run_slurm, run_multiproc, run_joblib).
+Script to plot data generated with one of the run scripts (run_slurm, run_multiproc, run_joblib).
 It first loads .dat files and read data according to the specified column index.
 Then it plots the (moving) average with 95% confidence interval.
 
@@ -32,12 +32,12 @@ if __name__ == '__main__':
     parser.add_argument('--c', type=int, help='index of the column to plot')
     parser.add_argument('--e', type=str, help='name of the environment')
     parser.add_argument('--a', nargs='+', type=str, help='list of the algorithms')
-    parser.add_argument('--f', type=str, help='folder name', default='data-trial/')
+    parser.add_argument('--f', type=str, help='data folder', default='data-trial/')
     parser.add_argument('--t', type=str, help='title', default='')
     parser.add_argument('--x', type=str, help='x-axis label', default='')
     parser.add_argument('--y', type=str, help='y-axis label', default='')
     parser.add_argument('--l', type=str, help='legend names (if empty, the algorithms names will be used)', default='')
-    parser.add_argument('--m', type=int, help='moving average window', default='1')
+    parser.add_argument('--m', type=int, help='moving average window (default 1, not used)', default='1')
 
 
     args = parser.parse_args()
@@ -69,13 +69,17 @@ if __name__ == '__main__':
             data.append(data_mat[:,args.c])
         data = np.array(data)
 
+        if data.shape[0] == 0:
+            continue
+
         if args.m > 1:
             for i in range(data.shape[0]):
                 data[i,:] = moving_average(data[i,:], args.m)
+
         shaded_plot(ax, data, color=color)
 
     # CHANGE IT!
-    plt.xticks([0, 2000, 4000, 6000, 8000, 10000], ['0', '2', '4', '6', '8', '10'])
+    # plt.xticks([0, 2000, 4000, 6000, 8000, 10000], ['0', '2', '4', '6', '8', '10'])
     leg = plt.legend(handles=ax.lines, labels=args.l, loc='lower left')
 
     frame = leg.get_frame()
