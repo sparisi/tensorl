@@ -140,17 +140,11 @@ def main(env_name, seed=1, run_name=None):
         session.run(update_std, {new_std_ph: np.sqrt(np.diag(new_cov))[None,:]})
 
         end_neg_lik = session.run(loss_pi, {pi.obs: np.atleast_2d(paths["obs"]), pi.act: np.atleast_2d(paths["act"]), weights: w[:,None]})
-        actual_kl = pi.estimate_kl(paths["obs"], old_mean, old_std)
-
-        # Fast deterministic policy
-        bw = np.atleast_2d(bw)
-        P = session.run(mean.P)
-        shift = session.run(mean.shift)
-        pi_det = lambda x: ( np.sin( (np.atleast_2d(x)/bw).dot(P) + shift) ).dot(new_K.T[1:,:]) + new_K.T[0,:]
+        actual_kl = pi.estimate_klm(paths["obs"], old_mean, old_std)
 
         # Evaluate pi and print info
-        #avg_rwd = evaluate_policy(env_eval, policy=pi_det, min_paths=paths_eval)
-        avg_rwd = np.sum(paths["rwd"]) / paths["nb_paths"]
+        avg_rwd = evaluate_policy(env_eval, policy=pi.draw_action_det, min_paths=paths_eval)
+        # avg_rwd = np.sum(paths["rwd"]) / paths["nb_paths"]
         entr = pi.estimate_entropy(paths["obs"])
         print('%d | %.4f, %.4f, %.4f (%.4f), %.4f -> %.4f' % (itr, avg_rwd, entr, kl, actual_kl, init_neg_lik, end_neg_lik), flush=True)
         if verbose:

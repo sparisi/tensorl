@@ -48,9 +48,14 @@ class MVNPolicy:
 
         self.old_mean = tf.placeholder(dtype=obs.dtype, shape=[None, self.act_size], name=name+'_old_mean')
         self.old_std = tf.placeholder(dtype=obs.dtype, shape=[None, self.act_size], name=name+'_old_std')
-        self.kl = 0.5 * tf.reduce_mean(2.*tf.reduce_sum(tf.log(self.std), axis=1) - 2.*tf.reduce_sum(tf.log(self.old_std), axis=1) +
+
+        # KL divergences: m-projection KL(pi_new || pi_old) and i-projection KL(pi_old || pi_new)
+        self.klm = 0.5 * tf.reduce_mean(2.*tf.reduce_sum(tf.log(self.std), axis=1) - 2.*tf.reduce_sum(tf.log(self.old_std), axis=1) +
                                 tf.reduce_sum((self.mean - self.old_mean)**2 / self.std**2, axis=1) +
                                 tf.reduce_sum(self.old_std**2/self.std**2, axis=1) - self.act_size)
+        self.kli = 0.5 * tf.reduce_mean(2.*tf.reduce_sum(tf.log(self.old_std), axis=1) - 2.*tf.reduce_sum(tf.log(self.std), axis=1) +
+                                tf.reduce_sum((self.old_mean - self.mean)**2 / self.old_std**2, axis=1) +
+                                tf.reduce_sum(self.std**2/self.old_std**2, axis=1) - self.act_size)
 
 
     def get_log_prob(self, obs, act):
@@ -59,8 +64,11 @@ class MVNPolicy:
     def estimate_entropy(self, obs):
         return np.squeeze(self.session.run(self.entropy, {self.obs: np.atleast_2d(obs)}))
 
-    def estimate_kl(self, obs, old_mean, old_std):
-        return np.squeeze(self.session.run(self.kl, {self.obs: np.atleast_2d(obs), self.old_std: np.atleast_2d(old_std), self.old_mean: np.atleast_2d(old_mean)}))
+    def estimate_kli(self, obs, old_mean, old_std):
+        return np.squeeze(self.session.run(self.kli, {self.obs: np.atleast_2d(obs), self.old_std: np.atleast_2d(old_std), self.old_mean: np.atleast_2d(old_mean)}))
+
+    def estimate_klm(self, obs, old_mean, old_std):
+        return np.squeeze(self.session.run(self.klm, {self.obs: np.atleast_2d(obs), self.old_std: np.atleast_2d(old_std), self.old_mean: np.atleast_2d(old_mean)}))
 
     def draw_action(self, obs):
         return np.squeeze(self.session.run(self.output, {self.obs: np.atleast_2d(obs)}))

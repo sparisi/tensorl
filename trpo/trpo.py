@@ -65,7 +65,7 @@ def main(env_name, seed=1, run_name=None):
     old_log_probs = tf.placeholder(dtype=precision, shape=[None, 1], name='old_log_probs')
     prob_ratio = tf.exp(pi.log_prob - old_log_probs)
     loss_pi = -tf.reduce_mean(tf.multiply(prob_ratio, advantage))
-    solver = TRPO(session, loss_pi, pi.kl, mean.vars+[std], kl_bound=kl_bound, cg_damping=cg_damping)
+    solver = TRPO(session, loss_pi, pi.klm, mean.vars+[std], kl_bound=kl_bound, cg_damping=cg_damping)
 
     # Init variables
     session.run(tf.global_variables_initializer())
@@ -111,7 +111,7 @@ def main(env_name, seed=1, run_name=None):
         # avg_rwd = evaluate_policy(env, policy=draw_fast, min_paths=paths_eval)
         avg_rwd = np.sum(paths["rwd"]) / paths["nb_paths"]
         entr = pi.estimate_entropy(paths["obs"])
-        kl = pi.estimate_kl(paths["obs"], old_mean, old_std)
+        kl = pi.estimate_klm(paths["obs"], old_mean, old_std)
         print('%d | %e -> %e   %e -> %e   %e   %e   %e   %e   ' % (itr, v_loss_before, v_loss_after, pi_loss_before, pi_loss_after, entr, kl, avg_rwd, mstde), flush=True)
         with open(logger.fullname, 'ab') as f:
             np.savetxt(f, np.atleast_2d([v_loss_before, v_loss_after, pi_loss_before, pi_loss_after, entr, kl, avg_rwd, mstde])) # save data

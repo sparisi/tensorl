@@ -144,7 +144,7 @@ def main(seed=1, run_name=None):
         session.run(update_std, {new_std_ph: np.sqrt(np.diag(new_cov))[None,:]*1.001})
 
         end_neg_lik = session.run(loss_pi, {pi.obs: paths["obs"], pi.act: paths["act"], weights: w[:,None]})
-        actual_kl = pi.estimate_kl(paths["obs"], old_mean, old_std)
+        actual_kl = pi.estimate_klm(paths["obs"], old_mean, old_std)
 
         # Plot V, REPS weights, and pi
         ax_scatter.cla()
@@ -155,14 +155,8 @@ def main(seed=1, run_name=None):
         myplot_pi.update(session.run(mean.output[0], {obs: np.atleast_2d(XY)}))
         myplot_pi2.update(np.clip(session.run(mean.output[0], {obs: np.atleast_2d(XY)}), -2, 2))
 
-        # Fast deterministic policy
-        bw = np.atleast_2d(bw)
-        P = session.run(mean.P)
-        shift = session.run(mean.shift)
-        pi_det = lambda x: ( np.sin( (np.atleast_2d(x)/bw).dot(P) + shift) ).dot(new_K.T[1:,:]) + new_K.T[0,:]
-
         # Evaluate pi and print info
-        avg_rwd = evaluate_policy(env_eval, policy=pi_det, min_paths=1000)
+        avg_rwd = evaluate_policy(env_eval, policy=pi.draw_action_det, min_paths=1000)
         # avg_rwd = np.sum(paths["rwd"]) / paths["nb_paths"]
         entr = pi.estimate_entropy(paths["obs"])
         print('%d | %.4f, %.4f, %.4f (%.4f), %.4f -> %.4f' % (itr, avg_rwd, entr, kl, actual_kl, init_neg_lik, end_neg_lik), flush=True)

@@ -20,7 +20,7 @@ class ACREPS:
         self.v = v
         self.theta = v.vars
         self.adv = self.q - self.v.output[0]
-        self.w = tf.exp(1./self.eta * (self.adv - tf.reduce_max(self.adv)))
+        self.w = tf.exp((self.adv - tf.reduce_max(self.adv)) / self.eta)
         self.dual = self.eta*self.epsilon + self.eta*tf.log(tf.reduce_mean(self.w)) + tf.reduce_max(self.adv) + tf.reduce_mean(self.v.output[0])
         self.optimizer = tf.contrib.opt.ScipyOptimizerInterface(self.dual,
                                               options={'maxiter': scipy_iter, 'disp': False, 'ftol': 0},
