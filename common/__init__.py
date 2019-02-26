@@ -7,3 +7,4 @@ from .policy import *
 from .noise import *
 from .rl_utils import *
 from .logger import *
+from .cross_validation import *

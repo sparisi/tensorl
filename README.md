@@ -38,15 +38,16 @@ With data generated from the runs, you can plot the average results with 95% con
 You can also use other physics simulators, such as [Roboschool](https://github.com/openai/roboschool/), [PyBullet](https://pypi.org/project/pybullet/) and [MuJoCo](https://github.com/openai/mujoco-py/).
 
 #### Common files
-* `approximators.py`   : neural network, random Fourier features, polynomial features
-* `average_env.py`     : introduces state resets to consider average return MDPs
-* `data_collection.py` : functions for sampling MDP transitions and getting mini-batches
-* `filter_env.py`      : modifies a gym environment to have states and actions normalized in [-1,1]
-* `logger.py`          : creates folders for saving data
-* `noise.py`           : noise functions
-* `plotting.py`        : to plot value functions
-* `policy.py`          : implementation of common policies
-* `rl_utils.py`        : RL functions, such as [generalized advantage estimation](https://arxiv.org/abs/1506.02438) and [Retrace](https://arxiv.org/pdf/1606.02647.pdf)
+* `approximators.py`    : neural network, random Fourier features, polynomial features
+* `average_env.py`      : introduces state resets to consider average return MDPs
+* `cross_validation.py` : function to minimize a loss function with cross-validation
+* `data_collection.py`  : functions for sampling MDP transitions and getting mini-batches
+* `filter_env.py`       : modifies a gym environment to have states and actions normalized in [-1,1]
+* `logger.py`           : creates folders for saving data
+* `noise.py`            : noise functions
+* `plotting.py`         : to plot value functions
+* `policy.py`           : implementation of common policies
+* `rl_utils.py`         : RL functions, such as [generalized advantage estimation](https://arxiv.org/abs/1506.02438) and [Retrace](https://arxiv.org/pdf/1606.02647.pdf)
 
 #### Custom environment
 * `lqr_env.py`         : linear-quadratic regulator
