@@ -20,17 +20,17 @@ class MLP:
     '''
     Multi-layer perceptron.
     '''
-    def __init__(self, x, sizes, activations, scope, dropout_keep_prob=None):
+    def __init__(self, x, sizes, activations, scope, dropout_rate=None):
         self.name = 'mlp_approx_' + scope
-        self.dropout_keep_prob = dropout_keep_prob
+        self.dropout_rate = dropout_rate
         with tf.variable_scope(scope):
             self.output = []
             for i in x:
                 last_out = i
                 for l, size in enumerate(sizes):
                     last_out = tf.layers.dense(last_out, size, activation=activations[l], name=str(l), reuse=tf.AUTO_REUSE)
-                    if dropout_keep_prob is not None:
-                        last_out = tf.nn.dropout(last_out, keep_prob=dropout_keep_prob)
+                    if dropout_rate is not None:
+                        last_out = tf.nn.dropout(last_out, rate=dropout_rate)
                 self.output.append(last_out)
         self.vars = tf.trainable_variables(scope=scope)
 
