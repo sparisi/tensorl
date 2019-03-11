@@ -1,3 +1,18 @@
+'''
+The code is written such that each worker gets a thread, and the master also gets
+its own thread to evaluate its policy and to check when to stop the workers
+(which happens by sending a Coordinator stop request).
+
+The loss function is loss_pi + loss_v because V and pi do not share layers/parameters.
+Master and workers have an AC_Network attribute where variables are managed
+through scopes (master, worker_0, worker_1, ...).
+
+Hyperparameters have to be set manually here (gamma, lrate, update frequency, ...)
+and in 'agent.py' (networks architecture).
+
+This code was inspired by https://github.com/awjuliani/DeepRL-Agents/blob/master/A3C-Doom.ipynb
+'''
+
 from .agent import *
 import threading
 import multiprocessing
@@ -11,11 +26,9 @@ if __name__ == '__main__':
         raise Exception('Missing environment!')
 
     gamma = 0.99
-    max_ep_steps = 1000
-    update_freq = 1
-    # update_freq = max_ep_steps
+    update_freq = 2
+    lrate = 1e-3
     max_steps = 1e6
-    lrate = 1e-4
     n_proc = multiprocessing.cpu_count()
     # n_proc = 3
 
@@ -25,6 +38,7 @@ if __name__ == '__main__':
         global_steps = tf.Variable(0, dtype=tf.int32, name='global_steps', trainable=False)
         optimizer = tf.train.AdamOptimizer(lrate)
         master = Master(env_name, global_steps)
+        max_ep_steps = master.env._max_episode_steps # Use default timesteps limit
         workers = []
         for i in range(n_proc-1):
             workers.append(Worker(i, env_name, optimizer, global_steps))
