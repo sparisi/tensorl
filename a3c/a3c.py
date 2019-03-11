@@ -5,9 +5,9 @@ its own thread to evaluate its policy and to check when to stop the workers
 
 The loss function is loss_pi + loss_v because V and pi do not share layers/parameters.
 Master and workers have an AC_Network attribute where variables are managed
-through scopes (master, worker_0, worker_1, ...).
+through scopes (master/v, worker_0/v, master/pi, ...).
 
-Hyperparameters have to be set manually here (gamma, lrate, update frequency, ...)
+Hyperparameters have to be set manually here (gamma, lrate, update_freq, ...)
 and in 'agent.py' (networks architecture).
 
 This code was inspired by https://github.com/awjuliani/DeepRL-Agents/blob/master/A3C-Doom.ipynb
@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
     gamma = 0.99
     update_freq = 2
-    lrate = 1e-3
+    lrate = 1e-4
     max_steps = 1e6
     n_proc = multiprocessing.cpu_count()
     # n_proc = 3
