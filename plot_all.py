@@ -29,7 +29,6 @@ if __name__ == '__main__':
 
     fig = plt.figure()
     plt.axes()
-    ax = fig.add_subplot(111)
 
     palette = itertools.cycle(sns.color_palette())
 
@@ -42,9 +41,9 @@ if __name__ == '__main__':
                 color = next(palette)
                 data = data_mat[:,args.c]
                 data = data[np.logical_and(~np.isnan(data), ~np.isinf(data))]
-                ax.plot(data, color=color)
+                plt.plot(data, color=color)
 
-    leg = plt.legend(handles=ax.lines, labels=l, loc='lower left')
+    leg = plt.legend(handles=plt.gca().lines, labels=l, loc='lower left')
     frame = leg.get_frame()
     frame.set_facecolor('white')
     picsize = fig.get_size_inches() / 1.3
