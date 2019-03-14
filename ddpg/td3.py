@@ -66,7 +66,7 @@ def main(env_name, seed=1, run_name=None):
 
     # Build pi
     pi = MLP([obs], pi_sizes+[act_size], pi_activations+[None], 'pi') # pi(s)
-    pit = MLP([nobs], pi_sizes+[act_size], pi_activations+[None], 'pit') # pi(s') used in the TD error targets
+    pit = MLP([nobs], pi_sizes+[act_size], pi_activations+[None], 'target_pi') # pi(s') used in the TD error targets
 
     # Bound actions
     act_bound = np.asscalar(env.action_space.high[0])
@@ -82,9 +82,9 @@ def main(env_name, seed=1, run_name=None):
              q_sizes+[1], q_activations+[None], 'q2')
 
     q1t = MLP([tf.concat([nobs, nact], axis=1)], # Q1(s',pi(s')+noise) for the TD error targets
-              q_sizes+[1], q_activations+[None], 'q1t')
+              q_sizes+[1], q_activations+[None], 'target_q1')
     q2t = MLP([tf.concat([nobs, nact], axis=1)],
-              q_sizes+[1], q_activations+[None], 'q2t')
+              q_sizes+[1], q_activations+[None], 'target_q2')
 
     # Loss functions, gradients and optimizers
     loss_q1 = tf.reduce_mean(0.5*tf.square( q1.output[0] - (rwd + gamma * tf.minimum(q1t.output[0], q2t.output[0]) * (1.-done)) ))

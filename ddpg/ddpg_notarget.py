@@ -71,7 +71,7 @@ def main(env_name, seed=1, run_name=None):
              q_sizes+[1], q_activations+[None], 'q')
 
     qt = MLP([tf.concat([nobs, pi.output[1]], axis=1)], # Q(s',pi(s')) for the TD error targets
-              q_sizes+[1], q_activations+[None], 'qt')
+              q_sizes+[1], q_activations+[None], 'target_q')
 
     # Loss functions, gradients and optimizers
     loss_q = tf.reduce_mean(0.5*tf.square( q.output[0] - (rwd + gamma * qt.output[0]) ))

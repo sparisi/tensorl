@@ -58,7 +58,7 @@ def main(env_name, seed=1, run_name=None):
 
     # Build Q
     q = MLP([tf.concat([obs, act], axis=1)], q_sizes+[1], q_activations+[None], 'q')
-    qt = MLP([tf.concat([nobs, nact], axis=1)], q_sizes+[1], q_activations+[None], 'qt') # fixed target for TD(0)
+    qt = MLP([tf.concat([nobs, nact], axis=1)], q_sizes+[1], q_activations+[None], 'target_q') # fixed target for TD(0)
     loss_q = tf.reduce_mean(0.5*tf.square(q.output[0] - (rwd + gamma*qt.output[0]*(1.-done))))
     optimize_q = tf.train.AdamOptimizer(lrate_q).minimize(loss_q, var_list=q.vars)
 
