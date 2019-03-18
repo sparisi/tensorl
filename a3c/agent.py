@@ -124,17 +124,17 @@ class Worker():
 		self.ac_nets = AC_Network(self.name, obs_size, act_size, act_bound=act_bound, optimizer=optimizer)
 		self.update_local_ops = update_target_graph('master', self.name) # Op to copy master paramters to worker networks
 
-	def train(self, data, session, gamma):
+	def train(self, data, v, session, gamma):
 		# Advantage estimation
 		adv = np.empty_like(data["rwd"])
 		for k in reversed(range(len(data["rwd"]))):
 			if data["done"][k]:
-				adv[k] = data["rwd"][k] - data["v"][k]
+				adv[k] = data["rwd"][k] - v[k]
 			else:
-				adv[k] = data["rwd"][k] + gamma * data["v"][k+1] - data["v"][k]
+				adv[k] = data["rwd"][k] + gamma * v[k+1] - v[k]
 
 		# Update the master network using gradients from worker loss
-		feed_dict = {self.ac_nets.target_v: np.atleast_2d(adv + data["v"][:-1]),
+		feed_dict = {self.ac_nets.target_v: np.atleast_2d(adv + v[:-1]),
 			self.ac_nets.obs: np.atleast_2d(data["obs"]),
 			self.ac_nets.act: np.atleast_2d(data["act"]),
 			self.ac_nets.advantage: np.atleast_2d(adv)}
@@ -147,7 +147,6 @@ class Worker():
 		data["nobs"] = np.zeros((update_freq,self.obs_size))
 		data["act"] = np.zeros((update_freq,self.act_size))
 		data["rwd"] = np.zeros((update_freq,1))
-		data["v"] = np.zeros((update_freq,1))
 		data["done"] = np.zeros((update_freq,1))
 
 		with session.as_default(), session.graph.as_default():
@@ -170,7 +169,6 @@ class Worker():
 					data["nobs"][data_idx,:] = nobs
 					data["rwd"][data_idx,:] = rwd
 					data["done"][data_idx,:] = done
-					data["v"][data_idx,:] = session.run(self.ac_nets.v, {self.ac_nets.obs: np.atleast_2d(obs)})
 					data_idx += 1
 					obs = nobs
 					session.run(self.increment_global_steps)
@@ -180,14 +178,14 @@ class Worker():
 						batch = {}
 						for k, _ in data.items(): # Remove empty zeros
 							batch[k] = data[k][:data_idx,:]
-						batch["v"] = session.run(self.ac_nets.v, {self.ac_nets.obs: np.atleast_2d(batch["obs"])})
+						v = session.run(self.ac_nets.v, {self.ac_nets.obs: np.atleast_2d(batch["obs"])})
 
 						if ~done: # Bootstrap the last step value with V[s']
-							batch["v"] = np.append(batch["v"], session.run(self.ac_nets.v, {self.ac_nets.obs: np.atleast_2d(nobs)}), axis=0)
+							v = np.append(v, session.run(self.ac_nets.v, {self.ac_nets.obs: np.atleast_2d(nobs)}), axis=0)
 						else:
-							batch["v"] = np.append(batch["v"], 0., axis=0)
+							v = np.append(v, 0., axis=0)
 
-						self.train(batch, session, gamma)
+						self.train(batch, v, session, gamma)
 
 						data_idx = 0 # Reset index
 						for k, _ in data.items(): # Reset data

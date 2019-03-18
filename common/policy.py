@@ -74,7 +74,7 @@ class MVNPolicy:
         return np.squeeze(self.session.run(self.output, {self.obs: np.atleast_2d(obs)}))
 
     def draw_action_det(self, obs):
-        return np.squeeze(self.session.run(self.mean, {self.obs: np.atleast_2d(obs)}) )
+        return np.squeeze(self.session.run(self.mean, {self.obs: np.atleast_2d(obs)}))
 
 
 

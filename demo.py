@@ -7,6 +7,12 @@ This demo shows:
 * how to save data,
 * how to save/restore a model,
 * how to save a summary to visualize the graph.
+
+To see the graph, run
+
+tensorboard --logdir logs-tf/
+
+and go to http://127.0.1.1:6006/
 '''
 
 import gym, gym.spaces
