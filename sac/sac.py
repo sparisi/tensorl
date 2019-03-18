@@ -1,7 +1,6 @@
 '''
-DDPG with TD-regularization.
-
-   TDerr = Q(s,a;w) - (r + g*Q(s',pi(s';t);w'))
+SAC as in its paper (in DDPG style), i.e., the policy is updated after each step
+using mini-batches from a replay memory.
 '''
 
 try:
@@ -56,44 +55,39 @@ def main(env_name, seed=1, run_name=None):
 
 
     # Build pi
-    pi = MLP([obs, nobs], pi_sizes+[act_size], pi_activations+[None], 'pi') # pi(s)
-
-    # Bound actions
     act_bound = np.asscalar(env.action_space.high[0])
     assert act_bound == -np.asscalar(env.action_space.low[0])
-    pi.output[0] = act_bound*tf.nn.tanh(pi.output[0])
-    pi.output[1] = act_bound*tf.nn.tanh(pi.output[1])
+    mean = MLP([obs], pi_sizes+[act_size], pi_activations+[None], 'pi_mean')
+    with tf.variable_scope('pi_std'): std = tf.Variable(std_noise * tf.ones([1, act_size], dtype=precision), dtype=precision)
+    pi = MVNPolicy(session, obs, mean.output[0], std, act_bound=act_bound)
 
-    # Build Q
-    q = MLP([tf.concat([obs, act], axis=1), # Q(s,a) to minimize the TD error
-             tf.concat([obs, pi.output[0]], axis=1)], # Q(s,pi(s)) to maximize the avg return
-             q_sizes+[1], q_activations+[None], 'q')
+    # Build Q and V
+    q = MLP([tf.concat([obs, act], axis=1), tf.concat([obs, pi.act], axis=1)], q_sizes+[1], q_activations+[None], 'q')
+    v = MLP([obs], v_sizes+[1], v_activations+[None], 'v')
+    vt = MLP([nobs], v_sizes+[1], v_activations+[None], 'target_v')
 
-    qt = MLP([tf.concat([nobs, pi.output[1]], axis=1)], # Q(s',pi(s')) for the TD error targets
-              q_sizes+[1], q_activations+[None], 'target_q')
+    # V and Q optimization
+    alpha = tf.placeholder(dtype=precision)
+    loss_v = tf.losses.mean_squared_error(v.output[0], q.output[1] - alpha*pi.log_prob)
+    loss_q = tf.losses.mean_squared_error(q.output[0], rwd + gamma*vt.output[0]*(1.-done))
+    optimize_v = tf.train.AdamOptimizer(lrate_v).minimize(loss_v, var_list=v.vars)
+    optimize_q = tf.train.AdamOptimizer(lrate_q).minimize(loss_q, var_list=q.vars)
 
-    # Loss functions, gradients and optimizers
-    loss_q = tf.reduce_mean(0.5*tf.square( q.output[0] - (rwd + gamma * qt.output[0]) ))
-    alpha = tf.placeholder(dtype=precision, name='alpha')
-    alpha_value = 0.1
-    alpha_decay = 0.999999
-    loss_pi = -tf.reduce_mean(q.output[1] - alpha*0.5*tf.square( q.output[0] - (rwd + gamma * qt.output[0]) ))
+    # pi optimization
+    loss_pi = tf.reduce_mean(tf.exp(pi.log_prob) * (pi.log_prob - (q.output[1] - v.output[0]))) # V(s) as baseline
+    optimize_pi = tf.train.AdamOptimizer(lrate_pi).minimize(loss_pi, var_list=mean.vars+[std])
 
-
-    optimizer_q = tf.train.AdamOptimizer(lrate_q).minimize(loss_q, var_list=q.vars)
-    optimizer_pi = tf.train.AdamOptimizer(lrate_pi).minimize(loss_pi, var_list=pi.vars)
-
+    # Init variables
     session.run(tf.global_variables_initializer())
-
-    # Reset Q and pi to have almost-0 output
+    mean.reset(session, 0.)
+    v.reset(session, 0.)
     q.reset(session, 0.)
-    pi.reset(session, 0.)
 
-    # Init target networks and prepare update operations
-    update_qt = []
-    for vars_q, vars_qt in zip(q.vars, qt.vars):
-        session.run(tf.assign(vars_qt, vars_q))
-        update_qt.append(tf.assign(vars_qt, tau_q*vars_q + (1.-tau_q)*vars_qt)) # soft target update
+    # Update target network op
+    update_vt = []
+    for vars_v, vars_vt in zip(v.vars, vt.vars):
+        session.run(tf.assign(vars_vt, vars_v))
+        update_vt.append(tf.assign(vars_vt, tau_v*vars_v + (1.-tau_v)*vars_vt)) # soft target update
 
     # Init dataset
     paths = {}
@@ -104,18 +98,16 @@ def main(env_name, seed=1, run_name=None):
     paths["done"] = np.empty((int(max_trans),1))
     trans = 0
     data_idx = 0
-    action_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(act_size), sigma=float(std_noise)*np.ones(act_size))
 
-    logger = LoggerData('ddpg_tdreg', env_name, run_name)
+    logger = LoggerData('sac', env_name, run_name)
     while trans < min_trans + learn_trans:
         # Reset environment
         obs_i = env.reset()
         done_i = False
-        action_noise.reset()
 
         # Run episode
         while not done_i:
-            act_i = np.squeeze(session.run(pi.output[0], {obs: np.atleast_2d(obs_i)})) + action_noise()
+            act_i = pi.draw_action(obs_i)
             nobs_i, rwd_i, done_i, _ = env.step(np.minimum(np.maximum(act_i, env.action_space.low), env.action_space.high))
 
             paths["obs"][data_idx,:] = obs_i
@@ -136,27 +128,24 @@ def main(env_name, seed=1, run_name=None):
             if trans > min_trans:
                 batch_idx = minibatch_idx(batch_size, min(len(paths["rwd"]), trans))
                 dct = {obs: paths["obs"][batch_idx,:],
-                       act: paths["act"][batch_idx,:],
                        nobs: paths["nobs"][batch_idx,:],
+                       act: paths["act"][batch_idx,:],
+                       pi.act: session.run(pi.output, {obs: paths["obs"][batch_idx,:]}),
                        rwd: paths["rwd"][batch_idx],
                        done: paths["done"][batch_idx],
-                       alpha: alpha_value}
+                      alpha: alpha_value}
 
-                session.run(optimizer_q, dct)
-                session.run(optimizer_pi, dct)
-                session.run(update_qt)
-                alpha_value *= alpha_decay
-
+                session.run([optimize_v, optimize_q, optimize_pi], dct)
+                session.run(update_vt)
 
             # Print info every X transitions (use the greedy policy, no noise)
             if trans % eval_every == 0 and trans > min_trans:
-                layers = session.run(pi.vars)
-                pi_det = lambda x : fast_policy(x, layers)
-                avg_rwd = evaluate_policy(env, pi_det, paths_eval, render=False)
-                mstde = session.run(loss_q, {obs: paths["obs"], act: paths["act"], rwd: paths["rwd"], done: paths["done"], nobs: paths["nobs"]})
-                print('%d   %.4f   %.4f' % (trans, avg_rwd, mstde), flush=True)
+                avg_rwd = evaluate_policy(env, pi.draw_action_det, paths_eval, render=False)
+                mstde = session.run(loss_q, {obs: paths["obs"], nobs: paths["nobs"], act: paths["act"], rwd: paths["rwd"], done: paths["done"]})
+                entr = pi.estimate_entropy(paths["obs"])
+                print('%d   %.4f   %.4f  %.4f  ' % (trans, avg_rwd, mstde, entr), flush=True)
                 with open(logger.fullname, 'ab') as f:
-                    np.savetxt(f, np.atleast_2d([avg_rwd, mstde])) # save data
+                    np.savetxt(f, np.atleast_2d([avg_rwd, mstde, entr])) # save data
 
     session.close()
 

@@ -4,21 +4,19 @@ def make_average_env(env, reset_prob=0.):
     '''
     In RL, we typically consider MDPs with discounted rewards. This function
     switches to the average reward setting by introducing state resets, i.e.,
-    the environment resets itself to its (random) initial state with some
-    probability. To guarantee the Markovian property of the MDP, we cannot have
+    the environment resets itself to its (random) initial state. The reset
+    probability is an argument of this function.
+    To guarantee the Markovian property of the MDP, we cannot have
     time-dependent resets. However, the reset can depend on the current state.
     Some possibilities are:
-    1) Always terminating only in terminal states,
-    2) Always terminating in terminal states, and with fixed probabiliy elsewhere,
-    3) Always terminating with fixed probability everywhere,
-    4) Terminating with a state-dependent probability.
+    1) Terminate only in terminal states (defaul gym behavior),
+    2) Terminate in terminal states, and with fixed probabiliy elsewhere (this function),
+    3) Terminate with fixed probability everywhere (i.e., ignore terminal states),
+    4) Terminate with a state-dependent probability.
 
-    The first case is the default gym implementation. This function implements
-    the second case.
-
-    In theory, there should be no horizon limit (_max_episode_steps) and an
+    In theory, there should be no horizon limit (env._max_episode_steps) and an
     episode should end only according to terminal states and resets.
-    You can change this by commenting some lines in the `step` function below.
+    You can change this by commenting out line 32.
 
     Reference:
     van Hoof et al, "Non-parametric Policy Search with Limited Information Loss",
@@ -36,7 +34,6 @@ def make_average_env(env, reset_prob=0.):
         def step(self, action):
             obs, rwd, done, info = env_type.step(self, action) # Super function
             done = done or (self._max_episode_steps <= self._elapsed_steps) or (np.random.rand() > (1.-self.reset_prob))
-            # done = np.random.rand() > (1.-self.reset_prob)
             return obs, rwd, done, info
 
     average_env = AverageEnv()

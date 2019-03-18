@@ -88,16 +88,16 @@ def main(env_name, seed=1, run_name=None):
     print('    V LOSS                         PI LOSS                        ENTROPY        RETURN')
     for itr in range(maxiter):
         paths = collect_samples(env, policy=pi.draw_action, min_trans=min_trans_per_iter)
-        dct_models = {obs: paths["obs"], pi.act: paths["act"], nobs: paths["nobs"]}
+        dct_model = {obs: paths["obs"], pi.act: paths["act"], nobs: paths["nobs"]}
         nb_trans = len(paths["rwd"])
 
         # Update dynamics models
         for epoch in range(epochs_fwd):
             if epoch == 0:
-                fwd_loss_before = session.run(loss_fwd, dct_models)
+                fwd_loss_before = session.run(loss_fwd, dct_model)
             for batch_idx in minibatch_idx_list(batch_size, len(paths["rwd"])):
                 session.run(optimize_fwd, {obs: paths["obs"][batch_idx], pi.act: paths["act"][batch_idx], nobs: paths["nobs"][batch_idx]})
-        fwd_loss_after = session.run(loss_fwd, dct_models)
+        fwd_loss_after = session.run(loss_fwd, dct_model)
 
         # Update V
         for epoch in range(epochs_v):
@@ -114,7 +114,7 @@ def main(env_name, seed=1, run_name=None):
         v_values = session.run(v.output[0], {obs: paths["obs"]})
         a_values = gae(paths, v_values, gamma, lambda_trace)
         a_values = (a_values - np.mean(a_values)) / np.std(a_values)
-        ic_values = np.asarray(session.run(curiosity, dct_models))[:,None]
+        ic_values = np.asarray(session.run(curiosity, dct_model))[:,None]
         ic_values = (ic_values - np.mean(ic_values)) / np.std(ic_values)
 
         a_values = a_values + beta * ic_values # add curiosity
