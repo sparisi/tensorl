@@ -15,7 +15,7 @@ will generate
 You can also save/load the learned model and visualize the graph. For more info, check `demo.py`. The demo also shows how to use the LQR environment and how to plot value functions.  
 
 Finally, use any of the `run` scripts in the root folder to run several trials of the same algorithm in parallel (see the scripts for instructions).  
-With data generated from the runs, you can plot the average results with 95% confidence interval using `shaded_plot.py`.
+With data generated from the runs, you can plot the average results with 95% confidence interval using `plot_shaded.py`, or you can plot all learning curves together with `plot_all.py` (see the scripts for instructions).
 
 
 > Note that all scripts use [flexible memory](https://github.com/tensorflow/tensorflow/issues/1578), i.e.,

@@ -63,7 +63,6 @@ def main(env_name, seed=1, run_name=None):
     # Build V and Q
     v = MLP([obs], v_sizes+[1], v_activations+[None], 'v')
     v_t = MLP([nobs], v_sizes+[1], v_activations+[None], 'target_v')
-    # q = MLP([tf.concat([obs, act], axis=1)], q_sizes+[1], q_activations+[None], 'q')
     q = MLP([tf.concat([obs, act], axis=1), tf.concat([obs, pi.output], axis=1)], q_sizes+[1], q_activations+[None], 'q')
 
     # V and Q optimization
