@@ -64,6 +64,7 @@ You can also use other physics simulators, such as [Roboschool](https://github.c
 * [Trust region policy optimization (TRPO)](https://arxiv.org/abs/1502.05477).
 * [Proximal policy optimization (PPO)](https://arxiv.org/abs/1707.06347).
 * [Asynchronous advantage actor-critic (A3C)](https://arxiv.org/abs/1602.01783).
+* [Soft Actor-Critic (SAC)](https://arxiv.org/abs/1801.01290).
 * [Relative entropy policy search (REPS)](http://jmlr.org/papers/v18/16-142.html).
 * [Actor-critic REPS (AC-REPS)](https://www.aaai.org/ocs/index.php/AAAI/AAAI16/paper/view/12247).  
 
@@ -73,4 +74,4 @@ You can also use other physics simulators, such as [Roboschool](https://github.c
 * [Curiosity-driven exploration by self-supervised prediction](https://arxiv.org/abs/1705.05363) (ICM) is implemented for PPO.
 * [Prioritized experience replay](https://arxiv.org/abs/1511.05952) (PER) is implemented for DDPG.
 
-> All implementations are very basic, there is no reward/gradient clipping, hyperparameters tuning, decaying KL bound, batch normalization, standardization with running mean and std, ...
+> All implementations are very basic, there is no reward/gradient clipping, hyperparameters tuning, decaying KL/entropy coefficient, batch normalization, standardization with running mean and std, ...
