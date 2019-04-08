@@ -10,7 +10,7 @@ This script will plot one line (for the desired data) for each run.
 Each line will have a legend entry with the filename.
 
 You can then press R to refresh the plot (e.g., if some trials are still running)
-or ESC to close plot and end the program. 
+or ESC to close plot and end the program.
 '''
 
 import os
@@ -38,24 +38,27 @@ if __name__ == '__main__':
         plt.cla()
         palette = itertools.cycle(sns.color_palette())
         l = []
-        for f in os.listdir(folder):
+        for f in sorted(os.listdir(folder)):
             if f.endswith(".dat"):
                 data_mat = np.loadtxt(os.path.join(folder, f))
                 if data_mat.shape[0] > 0:
                     l.append(f)
                     color = next(palette)
-                    data = data_mat[:,col]
+                    try:
+                        data = data_mat[:,col]
+                    except:
+                        break
                     data = data[np.logical_and(~np.isnan(data), ~np.isinf(data))]
                     plt.plot(data, color=color)
         leg = plt.legend(handles=plt.gca().lines, labels=l, loc='lower left')
         frame = leg.get_frame()
         frame.set_facecolor('white')
         plt.draw()
-        print('refreshed')
 
     def handle(event):
-        if event.key == 'r':
+        if event.key == 'r' or event.key == 'R':
             update()
+            print('refreshed')
         if event.key == 'escape':
             sys.exit(0)
 
