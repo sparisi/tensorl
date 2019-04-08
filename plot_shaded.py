@@ -29,9 +29,9 @@ def shaded_plot(ax, data, **kw):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--c', type=int, help='index of the column to plot')
-    parser.add_argument('--e', type=str, help='name of the environment')
-    parser.add_argument('--a', nargs='+', type=str, help='list of the algorithms')
+    parser.add_argument('--c', type=int, help='index of the column to plot', required=True)
+    parser.add_argument('--e', type=str, help='name of the environment', required=True)
+    parser.add_argument('--a', nargs='+', type=str, help='list of the algorithms', required=True)
     parser.add_argument('--f', type=str, help='data folder', default='data-trial/')
     parser.add_argument('--t', type=str, help='title', default='')
     parser.add_argument('--x', type=str, help='x-axis label', default='')
