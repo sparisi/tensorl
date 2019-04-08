@@ -33,7 +33,7 @@ def make_average_env(env, reset_prob=0.):
 
         def step(self, action):
             obs, rwd, done, info = env_type.step(self, action) # Super function
-            done = done or (self._max_episode_steps <= self._elapsed_steps) or (np.random.rand() > (1.-self.reset_prob))
+            done = done or (self._max_episode_steps <= self._elapsed_steps) or (np.random.rand() < self.reset_prob)
             return obs, rwd, done, info
 
     average_env = AverageEnv()
