@@ -52,6 +52,7 @@ def main():
     # Init variables (better not to initialize f to 0)
     session.run(tf.global_variables_initializer())
     v.reset(session, 0.)
+    f.reset(session, 0.)
 
     epochs_v = 20
     epochs_pi = 20
@@ -89,7 +90,8 @@ def main():
                 session.run(optimize_pi, dct_pi)
 
         avg_rwd = np.sum(paths["rwd"]) / paths["nb_paths"]
-        print('%d | %e  ' % (itr, avg_rwd), flush=True)
+        entr = pi.estimate_entropy(paths["obs"])
+        print('%d | %e  %e   ' % (itr, avg_rwd, entr), flush=True)
 
     session.close()
 
