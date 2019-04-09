@@ -62,6 +62,9 @@ if __name__ == '__main__':
         if event.key == 'escape':
             sys.exit(0)
 
+    def handle_close(event):
+        sys.exit(0)
+
     sns.set_context("paper")
     sns.set_style('darkgrid', {'legend.frameon':True})
 
@@ -70,6 +73,7 @@ if __name__ == '__main__':
     picsize = fig.get_size_inches() / 1.3
     fig.set_size_inches(picsize)
     fig.canvas.mpl_connect('key_press_event', handle)
+    fig.canvas.mpl_connect('close_event', handle_close)
     update()
 
     input('')
