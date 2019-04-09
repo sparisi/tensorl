@@ -29,6 +29,7 @@ class My3DPlot:
         self.ax_cbar = plt.colorbar(self.contour).ax
 
     def update(self, z):
+        self.fig.canvas.flush_events()
         self.ax_surf.cla()
         self.ax_contour.cla()
         self.ax_cbar.cla()
@@ -36,7 +37,6 @@ class My3DPlot:
         self.contour = self.ax_contour.contourf(self.xx, self.yy, z.reshape((self.n,self.n)), cmap=cm.coolwarm)
         plt.colorbar(self.contour, cax=self.ax_cbar)
         plt.draw()
-        plt.pause(0.0001)
 
 
 
@@ -53,7 +53,7 @@ class My2DScatter:
         self.scatter = self.ax.scatter([],[])
 
     def update(self, x, y, value):
+        self.fig.canvas.flush_events()
         self.ax.cla()
         self.scatter = self.ax.scatter(x, y, c=value)
         plt.draw()
-        plt.pause(0.0001)
