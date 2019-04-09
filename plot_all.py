@@ -50,7 +50,7 @@ if __name__ == '__main__':
                         break
                     data = data[np.logical_and(~np.isnan(data), ~np.isinf(data))]
                     plt.plot(data, color=color)
-        leg = plt.legend(handles=plt.gca().lines, labels=l, loc='lower left')
+        leg = plt.legend(handles=plt.gca().lines, labels=l, loc='best')
         frame = leg.get_frame()
         frame.set_facecolor('white')
         plt.draw()
