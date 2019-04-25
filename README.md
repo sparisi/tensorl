@@ -51,6 +51,7 @@ You can also use other physics simulators, such as [Roboschool](https://github.c
 
 #### Custom environment
 * `lqr_env.py`         : linear-quadratic regulator
+* `toy_sparse.py`      : toy problem with linear dynamics and sparse rewards
 
 #### Algorithm-specific files
 * `solver.py`          : (optional) defines optimization routines required by the algorithm
