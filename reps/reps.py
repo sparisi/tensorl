@@ -72,12 +72,17 @@ def main(env_name, seed=1, run_name=None):
     with tf.variable_scope('pi_std'): std = tf.Variable(std_noise * tf.ones([1, act_size], dtype=precision), dtype=precision)
     pi = MVNPolicy(session, obs, mean.output[0], std) # with lin policy we do not bound the action, or we lose linearity and convexity
     loss_pi = -tf.reduce_mean(weights*pi.log_prob) + tf.reduce_mean([tf.nn.l2_loss((x)) for x in mean.vars+[std]])*l2reg # weighted log-likelihood with l2 regularization
+    optimizer_pi = tf.contrib.opt.ScipyOptimizerInterface(loss_pi,
+                                              options={'maxiter': 100, 'disp': False, 'ftol': 0},
+                                              method='SLSQP',
+                                              var_list=mean.vars+[std])
 
     # Define pi update ops
     new_mean_ph = tf.placeholder(dtype=precision, shape=mean.vars[0].get_shape().as_list(), name='new_mean')
     new_std_ph = tf.placeholder(dtype=precision, shape=[None, act_size], name='new_std')
     update_mean = tf.assign(mean.vars[0], new_mean_ph)
     update_std = tf.assign(std, new_std_ph)
+
 
     # Build V
     v = Fourier([obs, nobs, iobs], 1, n_fourier, 'v', bandwidth=bw)
@@ -94,7 +99,7 @@ def main(env_name, seed=1, run_name=None):
     v.reset(session, 0.)
 
     all_paths = []
-    gamma = 1. - reset_prob
+    gamma = 1.-reset_prob
 
     logger_data = LoggerData('reps', env_name)
     for itr in range(maxiter):
@@ -119,11 +124,15 @@ def main(env_name, seed=1, run_name=None):
             print('\n\033[93m Reset probabiliy too high (' + str(avg_reset) + ' / ' + str(reset_prob) + ').\033[0m')
 
         # Run REPS
-        kl, w = solver.optimize(paths["obs"], paths["nobs"], paths["iobs"], paths["rwd"]/np.std(paths["rwd"]), gamma)
+        kl, w = solver.optimize(paths["obs"], paths["nobs"], paths["iobs"], paths["rwd"], gamma)
+        w = w / np.sum(w)
 
+        # Udpate pi
         old_mean = session.run(pi.mean, {pi.obs: paths["obs"]})
         old_std = session.run(pi.std)
-        init_neg_lik = session.run(loss_pi, {pi.obs: np.atleast_2d(paths["obs"]), pi.act: np.atleast_2d(paths["act"]), weights: w[:,None]})
+        dct = {pi.obs: np.atleast_2d(paths["obs"]), pi.act: np.atleast_2d(paths["act"]), weights: w[:,None]}
+        init_neg_lik = session.run(loss_pi, dct)
+        # optimizer_pi.minimize(session, dct)
 
         # Weighted max lik policy update
         phi = session.run(mean.phi[0], {obs: paths["obs"]})
@@ -139,12 +148,14 @@ def main(env_name, seed=1, run_name=None):
         session.run(update_mean, {new_mean_ph: new_K.T})
         session.run(update_std, {new_std_ph: np.sqrt(np.diag(new_cov))[None,:]})
 
-        end_neg_lik = session.run(loss_pi, {pi.obs: np.atleast_2d(paths["obs"]), pi.act: np.atleast_2d(paths["act"]), weights: w[:,None]})
+        end_neg_lik = session.run(loss_pi, dct)
         actual_kl = pi.estimate_klm(paths["obs"], old_mean, old_std)
 
         # Evaluate pi and print info
-        avg_rwd = evaluate_policy(env_eval, policy=pi.draw_action_det, min_paths=paths_eval)
+        # avg_rwd = evaluate_policy(env_eval, policy=pi.draw_action_det, min_paths=paths_eval)
         # avg_rwd = np.sum(paths["rwd"]) / paths["nb_paths"]
+        paths_eval = collect_samples(env_eval, policy=pi.draw_action, min_trans=3000)
+        avg_rwd = np.sum(paths_eval["rwd"]) / paths_eval["nb_paths"]
         entr = pi.estimate_entropy(paths["obs"])
         print('%d | %.4f, %.4f, %.4f (%.4f), %.4f -> %.4f' % (itr, avg_rwd, entr, kl, actual_kl, init_neg_lik, end_neg_lik), flush=True)
         if verbose:
