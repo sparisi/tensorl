@@ -80,7 +80,7 @@ if __name__ == '__main__':
 
     # CHANGE IT!
     # plt.xticks([0, 2000, 4000, 6000, 8000, 10000], ['0', '2', '4', '6', '8', '10'])
-    leg = plt.legend(handles=ax.lines, labels=args.l, loc='lower left')
+    leg = plt.legend(handles=ax.lines, labels=args.l, loc='best')
 
     frame = leg.get_frame()
     frame.set_facecolor('white')
