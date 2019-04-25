@@ -49,6 +49,7 @@ class ToySparseEnv(gym.Env):
             rwd = self.rwd_magnitude[is_close[0]]
             done = True
         rwd -= np.sum(0.01*u**2) # penalty on the action
+        u = np.clip(u, self.action_space.low, self.action_space.high)
         self.state = np.clip(self.state + u, self.observation_space.low, self.observation_space.high)
         return self._get_obs(), rwd, done, {}
 
