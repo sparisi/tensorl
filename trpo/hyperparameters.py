@@ -30,7 +30,6 @@ config_env = {
         'v_sizes'        : [15, 45],
         'lrate_v'        : 1e-3,
         'lrate_pi'       : 1e-3,
-        'e_clip'         : 0.1,
     },
     'Reacher-v2' : {
         'maxiter'        : 5000,
