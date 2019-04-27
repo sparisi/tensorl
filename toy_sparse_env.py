@@ -36,7 +36,7 @@ class ToySparseEnv(gym.Env):
         self.action_space = spaces.Box(low=-1., high=1., shape=(self.size,), dtype=np.float32)
         self.observation_space = spaces.Box(low=-20., high=20., shape=(self.size,), dtype=np.float32)
         self.rwd_radius = 1. # the reward is collected if the distance of the agent from the goal is within this radius
-        self.rwd_states = [[1, 1], [-2, 3], [10, -2], [20, 20]]
+        self.rwd_states = np.array([[1, 1], [-2, 3], [10, -2], [20, 20]])
         self.rwd_magnitude = [2, 4, 10, 50]
 
     def step(self,u):
@@ -48,8 +48,8 @@ class ToySparseEnv(gym.Env):
         else:
             rwd = self.rwd_magnitude[is_close[0]]
             done = True
-        rwd -= np.sum(0.01*u**2) # penalty on the action
         u = np.clip(u, self.action_space.low, self.action_space.high)
+        rwd -= np.sum(0.01*u**2) # penalty on the action
         self.state = np.clip(self.state + u, self.observation_space.low, self.observation_space.high)
         return self._get_obs(), rwd, done, {}
 

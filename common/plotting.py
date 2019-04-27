@@ -20,6 +20,7 @@ class My3DPlot:
         self.n = n
         self.ax_surf = self.fig.add_subplot(121, projection='3d')
         self.ax_contour = self.fig.add_subplot(122)
+
         x = np.linspace(xmin, xmax, n)
         y = np.linspace(ymin, ymax, n)
         self.xx, self.yy = np.meshgrid(x, y)
@@ -52,7 +53,7 @@ class My2DScatter:
         self.fig.suptitle(title)
         self.scatter = self.ax.scatter([],[])
 
-    def update(self, x, y, value):
+    def update(self, x, y, value=None):
         self.fig.canvas.flush_events()
         self.ax.cla()
         self.scatter = self.ax.scatter(x, y, c=value)
