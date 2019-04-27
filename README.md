@@ -74,5 +74,6 @@ You can also use other physics simulators, such as [Roboschool](https://github.c
 * [TD-regularized actor-critic methods](https://arxiv.org/abs/1812.08288) (TD-REG and GAE-REG) is implemented for PPO and TRPO.
 * [Curiosity-driven exploration by self-supervised prediction](https://arxiv.org/abs/1705.05363) (ICM) is implemented for PPO.
 * [Prioritized experience replay](https://arxiv.org/abs/1511.05952) (PER) is implemented for DDPG.
+* [Projections for approximate policy iteration algorithms](https://www.ias.informatik.tu-darmstadt.de/uploads/Team/RiadAkrour/icml19_sub.pdf) (HPROJ) is implemented for SAC.
 
 > All implementations are very basic, there is no reward/gradient clipping, hyperparameters tuning, decaying KL/entropy coefficient, batch normalization, standardization with running mean and std, ...
