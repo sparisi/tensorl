@@ -104,14 +104,13 @@ def main(env_name, seed=1, run_name=None):
     paths["done"] = np.empty((int(max_trans),1))
     trans = 0
     data_idx = 0
-    action_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(act_size), sigma=float(std_noise)*np.ones(act_size))
+    action_noise = NormalActionNoise(mu=np.zeros(act_size), sigma=float(std_noise)*np.ones(act_size))
 
     logger = LoggerData('ddpg_tdreg', env_name, run_name)
     while trans < min_trans + learn_trans:
         # Reset environment
         obs_i = env.reset()
         done_i = False
-        action_noise.reset()
 
         # Run episode
         while not done_i:

@@ -74,8 +74,8 @@ def main(env_name, seed=1, run_name=None):
     # Loss functions, gradients and optimizers
     td = q.output[0] - (rwd + gamma * qt.output[0] * (1.-done))
     weights = tf.placeholder(dtype=precision, shape=[None, 1], name='is_weights') # for importance sampling
-    loss_q = tf.reduce_mean(weights*0.5*tf.square( q.output[0] - (rwd + gamma * qt.output[0] * (1.-done)) ))
-    loss_pi = -tf.reduce_mean(weights*q.output[1])
+    loss_q = tf.reduce_mean(weights * 0.5 * tf.square( q.output[0] - (rwd + gamma * qt.output[0] * (1.-done)) ))
+    loss_pi = -tf.reduce_mean(weights * q.output[1])
 
 
     optimizer_q = tf.train.AdamOptimizer(lrate_q).minimize(loss_q, var_list=q.vars)
@@ -107,14 +107,13 @@ def main(env_name, seed=1, run_name=None):
     paths["prio"] = np.empty((int(max_trans),)) # priorities for PER
     trans = 0
     data_idx = 0
-    action_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(act_size), sigma=float(std_noise)*np.ones(act_size))
+    action_noise = NormalActionNoise(mu=np.zeros(act_size), sigma=float(std_noise)*np.ones(act_size))
 
     logger = LoggerData('ddpg_per', env_name, run_name)
     while trans < min_trans + learn_trans:
         # Reset environment
         obs_i = env.reset()
         done_i = False
-        action_noise.reset()
 
         # Run episode
         while not done_i:
@@ -145,7 +144,7 @@ def main(env_name, seed=1, run_name=None):
             if trans > min_trans:
                 alpha = 0.6
                 beta_start = 0.4
-                beta = min(1.0, beta_start + trans * (1.0 - beta_start) / (1.*learn_trans)) # anneal beta to 1 by the end of the learning
+                beta = min(1.0, beta_start + trans * (1.0 - beta_start) / (1. * learn_trans)) # anneal beta to 1 by the end of the learning
                 N = min(len(paths["rwd"]), trans)
 
                 probs = (paths["prio"][0:N] + 1e-5)**alpha # compute sampling probs

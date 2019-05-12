@@ -25,7 +25,7 @@ from .hyperparameters import *
 
 # TD3 hyperparameters as in its paper
 pi_delay = 2
-nact_sigma = np.sqrt(0.2)
+std_noise_n = 0.2
 nact_max = 0.5
 
 def main(env_name, seed=1, run_name=None):
@@ -81,7 +81,7 @@ def main(env_name, seed=1, run_name=None):
     q2 = MLP([tf.concat([obs, act], axis=1)], # only Q1 is used to update the policy
              q_sizes+[1], q_activations+[None], 'q2')
 
-    q1t = MLP([tf.concat([nobs, nact], axis=1)], # Q1(s',pi(s')+noise) for the TD error targets
+    q1t = MLP([tf.concat([nobs, nact], axis=1)], # Q1(s',a') for the TD error targets (a' = pi(s') + noise)
               q_sizes+[1], q_activations+[None], 'target_q1')
     q2t = MLP([tf.concat([nobs, nact], axis=1)],
               q_sizes+[1], q_activations+[None], 'target_q2')
@@ -98,8 +98,8 @@ def main(env_name, seed=1, run_name=None):
     session.run(tf.global_variables_initializer())
 
     # Reset Q and pi to have almost-0 output
-    q1.reset(session, 0.)
-    q2.reset(session, 0.)
+    # q1.reset(session, 0.) # having both Q to 0 may be detrimental
+    # q2.reset(session, 0.)
     pi.reset(session, 0.)
 
     # Init target networks and prepare update operations
@@ -125,20 +125,20 @@ def main(env_name, seed=1, run_name=None):
     paths["done"] = np.empty((int(max_trans),1))
     trans = 0
     data_idx = 0
-    action_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(act_size), sigma=float(std_noise)*np.ones(act_size))
+    action_noise = NormalActionNoise(mu=np.zeros(act_size), sigma=float(std_noise)*np.ones(act_size))
+    naction_noise = NormalActionNoise(mu=np.zeros(act_size), sigma=float(std_noise_n)*np.ones(act_size))
 
     logger = LoggerData('td3', env_name, run_name)
     while trans < min_trans + learn_trans:
         # Reset environment
         obs_i = env.reset()
         done_i = False
-        action_noise.reset()
 
         # Run episode
         while not done_i:
             act_i = np.squeeze(session.run(pi.output[0], {obs: np.atleast_2d(obs_i)})) + action_noise()
             nobs_i, rwd_i, done_i, _ = env.step(np.minimum(np.maximum(act_i, env.action_space.low), env.action_space.high))
-            nact_i = np.squeeze(session.run(pit.output[0], {nobs: np.atleast_2d(nobs_i)})) + np.clip(np.random.randn(act_size)*nact_sigma, -nact_max, nact_max)
+            nact_i = np.squeeze(session.run(pit.output[0], {nobs: np.atleast_2d(nobs_i)})) + np.clip(naction_noise(), -nact_max, nact_max)
 
             paths["obs"][data_idx,:] = obs_i
             paths["nobs"][data_idx,:] = nobs_i
