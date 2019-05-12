@@ -86,4 +86,4 @@ if __name__ == '__main__':
     frame.set_facecolor('white')
     picsize = fig.get_size_inches() / 1.3
     fig.set_size_inches(picsize)
-    plt.savefig(args.e+'_'+str(args.c)+".pdf", bbox_inches='tight', pad_inches=0)
+    plt.savefig(args.e+args.c+".pdf", bbox_inches='tight', pad_inches=0)
