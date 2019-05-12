@@ -42,6 +42,8 @@ class MLP:
         session.run(self.vars[-2].assign(new_lin))
         session.run(self.vars[-1].assign(new_bias))
 
+    def size(self):
+        return sum([np.prod(y) for y in [x.get_shape().as_list() for x in self.vars]])
 
 
 class Quadratic:
@@ -69,6 +71,9 @@ class Quadratic:
         new_vars = tf.Variable(new_val, dtype=self.output[0].dtype)
         session.run(tf.variables_initializer([new_vars]))
         session.run(self.vars[0].assign(new_vars))
+
+    def size(self):
+        return sum([np.prod(y) for y in [x.get_shape().as_list() for x in self.vars]])
 
 
 
@@ -100,6 +105,8 @@ class Linear:
             session.run(tf.variables_initializer([new_lin]))
             session.run(self.vars[-1].assign(new_lin))
 
+    def size(self):
+        return sum([np.prod(y) for y in [x.get_shape().as_list() for x in self.vars]])
 
 
 
@@ -132,3 +139,6 @@ class Fourier:
         new_vars = tf.Variable(new_val, dtype=self.output[0].dtype)
         session.run(tf.variables_initializer([new_vars]))
         session.run(self.vars[0].assign(new_vars))
+
+    def size(self):
+        return sum([np.prod(y) for y in [x.get_shape().as_list() for x in self.vars]])
