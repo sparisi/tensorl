@@ -1,6 +1,6 @@
 import numpy as np
 
-def make_average_env(env, reset_prob=0.):
+def make_average_env(env, reset_prob):
     '''
     In RL, we typically consider MDPs with discounted rewards. This function
     switches to the average reward setting by introducing state resets, i.e.,
@@ -10,7 +10,7 @@ def make_average_env(env, reset_prob=0.):
     time-dependent resets. However, the reset can depend on the current state.
     Some possibilities are:
     1) Terminate only in terminal states (defaul gym behavior),
-    2) Terminate in terminal states, and with fixed probabiliy elsewhere (this function),
+    2) Terminate in terminal states, and with fixed probability elsewhere (this function),
     3) Terminate with fixed probability everywhere (i.e., ignore terminal states),
     4) Terminate with a state-dependent probability.
 
