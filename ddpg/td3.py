@@ -23,11 +23,6 @@ import sys
 from common import *
 from .hyperparameters import *
 
-# TD3 hyperparameters as in its paper
-pi_delay = 2
-std_noise_n = 0.2
-nact_max = 0.5
-
 def main(env_name, seed=1, run_name=None):
     # Read hyperparameters
     try:
@@ -101,6 +96,13 @@ def main(env_name, seed=1, run_name=None):
     # q1.reset(session, 0.) # having both Q to 0 may be detrimental
     # q2.reset(session, 0.)
     pi.reset(session, 0.)
+
+
+    # TD3 hyperparameters as in its paper
+    pi_delay = 2
+    std_noise_n = 0.2 * act_bound
+    nact_max = 0.5 * act_bound
+
 
     # Init target networks and prepare update operations
     update_qt = []
