@@ -3,13 +3,15 @@ This file contains various types of function approximators.
 The approximator can have multiple input (x) and output (self.output).
 For instance, you may want to run Q(s,a) and Q(s,pi(s)) on the same network, sharing
 the placeholders and having a single graph to easily define cost functions and compute their derivatives.
-To this end, the input (x) of the MLP is a list of input, and the resulting output will be a list as well.
+To this end, the input x of the MLP is a list of placeholders, and the resulting output will be a list as well.
 
 Exampe: to define an approximator for the Q-fuction that is able to run both Q(s,a) and Q(s,pi(s)),
-init the MLP with x = [tf.concat([s, a], axis=1), tf.concat([s, pi(s)], axis=1)].
+create an MLP with x = [tf.concat([s, a], axis=1), tf.concat([s, pi(s)], axis=1)].
 Then, self.output[0] will be the tensor representing Q(s,a), while self.output[1] will represent Q(s,pi(s)).
 
-Linear approximators y=theta*phi(x) also have an attribute for features phi.
+Linear approximators y = theta * phi(x) also have an attribute for features phi.
+For MLP, this would correspond to the derivative of the network output w.r.t. the network parameters,
+but tf.gradients automatically computes the mean of the gradients, so you have to manually loop over all samples.
 '''
 
 import tensorflow as tf
@@ -128,6 +130,51 @@ class Fourier:
             self.phi = []
             for i in x:
                 phi = tf.sin(tf.matmul(i/self.bandwidth,self.P) + self.shift)
+                phi = tf.concat([1.0+0*i[:,:1], phi], axis=1) # add bias
+                self.phi.append(phi)
+                self.output.append(tf.matmul(phi, theta))
+        self.vars = tf.trainable_variables(scope=scope)
+
+    def reset(self, session, value=0.):
+        new_val = 1e-8*(np.random.rand(self.vars[0].shape[0],self.vars[0].shape[1])-0.5); # set linear+bias weights to 0
+        new_val[0] = value # set bias weight to desired value
+        new_vars = tf.Variable(new_val, dtype=self.output[0].dtype)
+        session.run(tf.variables_initializer([new_vars]))
+        session.run(self.vars[0].assign(new_vars))
+
+    def size(self):
+        return sum([np.prod(y) for y in [x.get_shape().as_list() for x in self.vars]])
+
+
+
+class RFB:
+    '''
+    Linear approximator with radial basis functions
+    phi(x) = exp( -(x - centers)' * B * (x - centers) )
+    where B is a diagonal matrix denoting the bandwiths of the Gaussians.
+    Centers are uniformly placed over x space, and bandwidths are automatically computed.
+    '''
+    def __init__(self, x, size, n_centers, x_space, scope):
+        self.name = 'rbf_approx_' + scope
+        n_x = x[0].get_shape().as_list()[1]
+        self.B = np.sqrt(n_centers**2 / np.diff(x_space)**2).T # bandwiths
+        m = np.diff(x_space) / n_centers
+        tmp = []
+        for i in range(n_x): # automatically place centers
+            tmp.append(np.linspace(-m[i]*0.1+x_space[i][0], x_space[i][1]+m[i]*0.1, n_centers))
+        tmp = np.meshgrid(*tmp)
+        self.centers = np.zeros((n_centers**n_x, n_x))
+        for i in range(n_x):
+            self.centers[:,i] = tmp[i].flatten()
+
+        with tf.variable_scope(scope):
+            theta = tf.Variable(tf.random_normal([self.centers.shape[0]+1,size], dtype=x[0].dtype))
+            self.output = []
+            self.phi = []
+            cB = self.centers * self.B
+            for i in x:
+                xB = i * self.B
+                phi = tf.exp(-tf.reduce_sum((tf.expand_dims(xB, axis=2) - np.expand_dims(cB.T, axis=0))**2, axis=1))
                 phi = tf.concat([1.0+0*i[:,:1], phi], axis=1) # add bias
                 self.phi.append(phi)
                 self.output.append(tf.matmul(phi, theta))
