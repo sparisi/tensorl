@@ -6,7 +6,7 @@ import numpy as np
 '''
 ---- DESCRIPTION ----
 
-Very simple chainwalk with linear dynamics.
+Very simple chainwalk with simple dynamics.
 The state is the agent position (x) and velocity (xd), and the bonus location (b).
 The action is the acceleration.
 The location of the bonus is randomly chosen at the beginning of the episode among
@@ -70,6 +70,7 @@ class ToyChainSparseEnv(gym.Env):
         self.state[1] = xd_n
         self.state[2] = b
         self.state = np.clip(self.state + u, self.observation_space.low, self.observation_space.high)
+        # rwd -= 0.001*u**2
         return self._get_obs(), rwd, done, {}
 
     def reset(self):

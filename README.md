@@ -47,11 +47,12 @@ You can also use other physics simulators, such as [Roboschool](https://github.c
 * `noise.py`            : noise functions
 * `plotting.py`         : to plot value functions
 * `policy.py`           : implementation of common policies
-* `rl_utils.py`         : RL functions, such as [generalized advantage estimation](https://arxiv.org/abs/1506.02438) and [Retrace](https://arxiv.org/pdf/1606.02647.pdf)
+* `rl_utils.py`         : RL functions, such as [generalized advantage estimation](https://arxiv.org/abs/1506.02438) and [retrace](https://arxiv.org/pdf/1606.02647.pdf)
 
-#### Custom environment
-* `lqr_env.py`         : linear-quadratic regulator
-* `toy_sparse.py`      : toy problem with linear dynamics and sparse rewards
+#### Custom gym environment
+* `lqr_env.py`              : linear-quadratic regulator
+* `toy_sparse.py`           : toy problem with linear dynamics and sparse rewards
+* `toy_chain_sparse_env.py` : toy problem with simple dynamics on a 1D plane, and sparse rewards
 
 #### Algorithm-specific files
 * `solver.py`          : (optional) defines optimization routines required by the algorithm
@@ -65,15 +66,15 @@ You can also use other physics simulators, such as [Roboschool](https://github.c
 * [Trust region policy optimization (TRPO)](https://arxiv.org/abs/1502.05477).
 * [Proximal policy optimization (PPO)](https://arxiv.org/abs/1707.06347).
 * [Asynchronous advantage actor-critic (A3C)](https://arxiv.org/abs/1602.01783).
-* [Soft Actor-Critic (SAC)](https://arxiv.org/abs/1801.01290).
+* Soft Actor-Critic (SAC), [first](https://arxiv.org/abs/1801.01290) and [second](https://arxiv.org/abs/1812.05905) version.
 * [Relative entropy policy search (REPS)](http://jmlr.org/papers/v18/16-142.html).
 * [Actor-critic REPS (AC-REPS)](https://www.aaai.org/ocs/index.php/AAAI/AAAI16/paper/view/12247).  
 
 <br/>
 
-* [TD-regularized actor-critic methods](https://arxiv.org/abs/1812.08288) (TD-REG and GAE-REG) is implemented for PPO and TRPO.
+* [TD-regularized actor-critic methods](https://arxiv.org/abs/1812.08288) (TD-REG and GAE-REG) is implemented for PPO, TRPO, and DDPG.
 * [Curiosity-driven exploration by self-supervised prediction](https://arxiv.org/abs/1705.05363) (ICM) is implemented for PPO.
 * [Prioritized experience replay](https://arxiv.org/abs/1511.05952) (PER) is implemented for DDPG.
-* [Projections for approximate policy iteration algorithms](https://www.ias.informatik.tu-darmstadt.de/uploads/Team/RiadAkrour/icml19_sub.pdf) (HPROJ) is implemented for SAC.
+* [Projections for approximate policy iteration algorithms](https://www.ias.informatik.tu-darmstadt.de/uploads/Team/RiadAkrour/icml19_sub.pdf) (HPROJ) is implemented for PPO.
 
 > All implementations are very basic, there is no reward/gradient clipping, hyperparameters tuning, decaying KL/entropy coefficient, batch normalization, standardization with running mean and std, ...
