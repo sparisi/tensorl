@@ -49,11 +49,12 @@ if __name__ == '__main__':
             if f.endswith(".dat"):
                 data_mat = np.loadtxt(os.path.join(folder, f))
                 if data_mat.shape[0] > 0:
-                    l.append(f)
                     try:
                         data = data_mat[:,col]
+                        l.append(f)
                     except:
-                        break
+                        print('Cannot read', f)
+                        continue
                     data = data[np.logical_and(~np.isnan(data), ~np.isinf(data))]
                     plt.plot(data, color=next(palette), linestyle=next(lines))
         leg = plt.legend(handles=plt.gca().lines, labels=l, loc='best')
