@@ -2,7 +2,7 @@
 Simple demo running an actor-critic-like REINFORCE (first fit Q, then run REINFORCE).
 
 This demo shows:
-* how to use the LQR environment,
+* how to use the LQR environment from https://github.com/sparisi/gym_toy,
 * how to use the plotting functions,
 * how to save data,
 * how to save/restore a model,
@@ -30,7 +30,7 @@ def main(checkpoint_path=None):
     # register and init LQR
     gym.envs.register(
          id='Lqr-v0',
-         entry_point='gym.envs.classic_control:LqrEnv',
+         entry_point='gym.envs.gym_toy:LqrEnv',
          max_episode_steps=150,
          kwargs={'size' : 1, 'init_state' : 10., 'state_bound' : np.inf},
     )

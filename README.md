@@ -12,7 +12,7 @@ For example, running
 will generate  
 `data-trial/ddpg/Pendulum-v0/180921_155842.dat`.  
 
-You can also save/load the learned model and visualize the graph. For more info, check `demo.py`. The demo also shows how to use the LQR environment and how to plot value functions.  
+You can also save/load the learned model and visualize the graph. For more info, check `demo.py`. The demo also shows how to use the [LQR environment](https://github.com/sparisi/gym_toy) and how to plot value functions.  
 
 Finally, use any of the `run` scripts in the root folder to run several trials of the same algorithm in parallel (see the scripts for instructions).  
 With data generated from the runs, you can plot the average results with 95% confidence interval using `plot_shaded.py`, or you can plot all learning curves together with `plot_all.py` (see the scripts for instructions).
@@ -48,11 +48,6 @@ You can also use other physics simulators, such as [Roboschool](https://github.c
 * `plotting.py`         : to plot value functions
 * `policy.py`           : implementation of common policies
 * `rl_utils.py`         : RL functions, such as [generalized advantage estimation](https://arxiv.org/abs/1506.02438) and [retrace](https://arxiv.org/pdf/1606.02647.pdf)
-
-#### Custom gym environment
-* `lqr_env.py`              : linear-quadratic regulator
-* `toy_sparse.py`           : toy problem with linear dynamics and sparse rewards
-* `toy_chain_sparse_env.py` : toy problem with simple dynamics on a 1D plane, and sparse rewards
 
 #### Algorithm-specific files
 * `solver.py`          : (optional) defines optimization routines required by the algorithm
