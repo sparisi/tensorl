@@ -147,7 +147,7 @@ class Fourier:
 
 
 
-class RFB:
+class RBF:
     '''
     Linear approximator with radial basis functions
     phi(x) = exp( -(x - centers)' * B * (x - centers) )

@@ -59,8 +59,8 @@ def main(env_name, seed=1, run_name=None):
     pi = MLP([obs, nobs], pi_sizes+[act_size], pi_activations+[None], 'pi') # pi(s)
 
     # Bound actions
-    act_bound = np.asscalar(env.action_space.high[0])
-    assert act_bound == -np.asscalar(env.action_space.low[0])
+    act_bound = env.action_space.high
+    assert np.all(act_bound == -env.action_space.low)
     pi.output[0] = act_bound*tf.nn.tanh(pi.output[0])
     pi.output[1] = act_bound*tf.nn.tanh(pi.output[1])
 

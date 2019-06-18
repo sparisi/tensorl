@@ -28,12 +28,16 @@ With data generated from the runs, you can plot the average results with 95% con
 
 #### Requirements
 * [`python 3.5+`](https://www.python.org/download/releases/3.0/)
-* [`tensorflow 1.12.0+`](https://www.tensorflow.org/install/)
-* [`tensorflow probability 0.5+`](https://www.tensorflow.org/probability/)
-* [`gym 0.10+`](https://github.com/openai/gym/)
-* [`numpy 1.15+`](https://docs.scipy.org/doc/numpy/user/install.html)
+* [`tensorflow 1.12.0`](https://www.tensorflow.org/install/)
+* [`tensorflow probability 0.5`](https://www.tensorflow.org/probability/)
+* [`gym 0.12.5+`](https://github.com/openai/gym/)
+* [`numpy 1.16+`](https://docs.scipy.org/doc/numpy/user/install.html)
 * [`scipy 1.2+`](https://www.scipy.org/install.html)
 * [`matplotlib`](https://matplotlib.org/users/installing.html)
+* [`seaborn`](https://seaborn.pydata.org/)
+
+> Later versions of tensorflow may raise warnings.
+
 
 You can also use other physics simulators, such as [Roboschool](https://github.com/openai/roboschool/), [PyBullet](https://pypi.org/project/pybullet/) and [MuJoCo](https://github.com/openai/mujoco-py/).
 

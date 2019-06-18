@@ -68,9 +68,9 @@ class Master():
 
 		obs_size = self.env.observation_space.shape[0]
 		act_size = self.env.action_space.shape[0]
-		act_bound = np.asscalar(self.env.action_space.high[0])
-		if act_bound != -np.asscalar(self.env.action_space.low[0]):
-			act_bound = np.inf
+
+	    act_bound = self.env.action_space.high
+	    assert np.all(act_bound == -self.env.action_space.low)
 
 		self.obs_size = obs_size
 		self.act_size = act_size
@@ -107,9 +107,9 @@ class Worker():
 
 		obs_size = self.env.observation_space.shape[0]
 		act_size = self.env.action_space.shape[0]
-		act_bound = np.asscalar(self.env.action_space.high[0])
-		if act_bound != -np.asscalar(self.env.action_space.low[0]):
-			act_bound = np.inf
+
+	    act_bound = self.env.action_space.high
+	    assert np.all(act_bound == -self.env.action_space.low)
 
 		self.obs_size = obs_size
 		self.act_size = act_size

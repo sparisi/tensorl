@@ -58,8 +58,8 @@ def main(env_name, seed=1, run_name=None):
     pit = MLP([nobs], pi_sizes+[act_size], pi_activations+[None], 'target_pi') # pi(s') used in the TD error targets
 
     # Bound actions
-    act_bound = np.asscalar(env.action_space.high[0])
-    assert act_bound == -np.asscalar(env.action_space.low[0])
+    act_bound = env.action_space.high
+    assert np.all(act_bound == -env.action_space.low)
     pi.output[0] = act_bound*tf.nn.tanh(pi.output[0])
     pit.output[0] = act_bound*tf.nn.tanh(pit.output[0])
 

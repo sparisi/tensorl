@@ -56,8 +56,8 @@ def main(env_name, seed=1, run_name=None):
     done = tf.placeholder(dtype=precision, shape=[None, 1], name='done')
 
     # Build pi
-    act_bound = np.asscalar(env.action_space.high[0])
-    assert act_bound == -np.asscalar(env.action_space.low[0])
+    act_bound = env.action_space.high
+    assert np.all(act_bound == -env.action_space.low)
     mean = MLP([obs], pi_sizes+[act_size], pi_activations+[None], 'pi_mean')
     with tf.variable_scope('pi_std'): std = tf.Variable(std_noise * tf.ones([1, act_size], dtype=precision), dtype=precision)
     pi = MVNPolicy(session, obs, mean.output[0], std, act_bound=act_bound)
@@ -83,7 +83,7 @@ def main(env_name, seed=1, run_name=None):
     optimize_q = tf.train.AdamOptimizer(lrate_q).minimize(loss_q, var_list=q.vars)
 
     # pi optimization
-    loss_pi = tf.reduce_mean(pi.log_prob * tf.stop_gradient (alpha * pi.log_prob - (q.output[1] - v.output[0]))) # no reparameterization, V as baseline
+    loss_pi = tf.reduce_mean(pi.log_prob * tf.stop_gradient(alpha * pi.log_prob - (q.output[1] - v.output[0]))) # no reparameterization, V as baseline
     optimize_pi = tf.train.AdamOptimizer(lrate_pi).minimize(loss_pi, var_list=mean.vars+[std])
 
     # Init variables
