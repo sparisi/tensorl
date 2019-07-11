@@ -25,17 +25,18 @@ Another option is to use `run_joblib.py`, but it is usually slower.
 import sys
 from multiprocessing import Process
 
-z = sys.argv[1]
+alg_name = sys.argv[1]
+n_trials = int(sys.argv[2])
+env_list = sys.argv[3:]
 
 from importlib import import_module
-alg = import_module("reps.test")
+alg = import_module(alg_name)
 
 # create a list of arguments, one for each run
 args = []
-for x in ["reps", "gae_scipy", "gae_adam"]:
-    for y in ["reps", "td", "gae"]:
-        # for z in ["reps_scipy", "reps_adam", "reps_scipy_b", "reps_adam_b", "trpo"]:
-        args.append((x, y, z))
+for trial in range(n_trials):
+    for env_name in env_list:
+        args.append((env_name, trial, str(trial)))
 
 # submit procs
 ps = []
