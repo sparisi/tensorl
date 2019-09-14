@@ -1,14 +1,14 @@
 import tensorflow as tf
 
-precision      = tf.float64
-min_trans      = 5e3       # warmup time (number of transitions before the learning starts)
-learn_trans    = 1e6       # max learning transations after warmup
-max_trans      = 5e3       # max data size
-eval_every     = 1000      # evaluate the current policy after X steps of learning
-paths_eval     = 20       # number of episodes used for evaluating a policy
+precision      = tf.float32
+min_trans      = 1e4       # warmup time (number of transitions before the learning starts)
+learn_trans    = 10e6       # max learning transations after warmup
+max_trans      = 1e4       # max data size
+eval_every     = 10000      # evaluate the current policy after X steps of learning
+paths_eval     = 50       # number of episodes used for evaluating a policy
 batch_size     = 64        # random mini-batch size for computing the gradients
 gamma          = 0.99      # discount factor
-std_noise      = 0.1       # noise of the OU process
+std_noise      = 0.1       # policy noise
 tau_q          = 0.005      # soft update of the target Q network
 tau_pi         = 0.005      # soft update of the target pi network
 lrate_pi       = 1e-4      # ADAM learning rate (policy optimizer)
@@ -36,6 +36,6 @@ config_env = {
         'lrate_pi'       : 1e-3,
     },
     'Reacher-v2' : {
-        'maxiter'        : 3000,
+        'learn_trans'    : 1e6,
     },
 }

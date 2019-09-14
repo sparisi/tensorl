@@ -84,7 +84,7 @@ def main(env_name, seed=1, run_name=None):
     session.run(tf.global_variables_initializer())
 
     # Reset Q and pi to have almost-0 output
-    q.reset(session, 0.)
+    # q.reset(session, 0.)
     pi.reset(session, 0.)
 
     # Init target networks and prepare update operations
@@ -106,7 +106,7 @@ def main(env_name, seed=1, run_name=None):
     paths["done"] = np.empty((int(max_trans),1))
     trans = 0
     data_idx = 0
-    action_noise = NormalActionNoise(mu=np.zeros(act_size), sigma=float(std_noise)*np.ones(act_size))
+    action_noise = NormalActionNoise(mu=np.zeros(act_size), sigma=np.array(std_noise)*np.ones(act_size))
 
     logger = LoggerData('ddpg_notarget', env_name, run_name)
     while trans < min_trans + learn_trans:

@@ -4,6 +4,9 @@ Twin delayed DDPG. Differences from DDPG:
 * In the TD targets, noise is added to pi(s';t')
 * The policy is updated every 2 steps, not every step
 
+Difference from the original paper (following SAC paper):
+* min(Q1,Q2) is used to update the policy, not always Q1
+
    TDerr = Q(s,a;w_i) - (r + g*min_j(Q(s',pi(s';t')+noise;w_j')))
 '''
 
@@ -73,7 +76,8 @@ def main(env_name, seed=1, run_name=None):
     q1 = MLP([tf.concat([obs, act], axis=1), # Q1(s,a) to minimize the TD error
              tf.concat([obs, pi.output[0]], axis=1)], # Q1(s,pi(s)) to maximize the avg return
              q_sizes+[1], q_activations+[None], 'q1')
-    q2 = MLP([tf.concat([obs, act], axis=1)], # only Q1 is used to update the policy
+    q2 = MLP([tf.concat([obs, act], axis=1),
+             tf.concat([obs, pi.output[0]], axis=1)],
              q_sizes+[1], q_activations+[None], 'q2')
 
     q1t = MLP([tf.concat([nobs, nact], axis=1)], # Q1(s',a') for the TD error targets (a' = pi(s') + noise)
@@ -84,7 +88,7 @@ def main(env_name, seed=1, run_name=None):
     # Loss functions, gradients and optimizers
     loss_q1 = tf.reduce_mean(0.5*tf.square( q1.output[0] - (rwd + gamma * tf.minimum(q1t.output[0], q2t.output[0]) * (1.-done)) ))
     loss_q2 = tf.reduce_mean(0.5*tf.square( q2.output[0] - (rwd + gamma * tf.minimum(q1t.output[0], q2t.output[0]) * (1.-done)) ))
-    loss_pi = -tf.reduce_mean(q1.output[1])
+    loss_pi = -tf.reduce_mean(tf.minimum(q1.output[1], q2.output[1]))
 
     optimizer_q1 = tf.train.AdamOptimizer(lrate_q).minimize(loss_q1, var_list=q1.vars)
     optimizer_q2 = tf.train.AdamOptimizer(lrate_q).minimize(loss_q2, var_list=q2.vars)
@@ -93,7 +97,7 @@ def main(env_name, seed=1, run_name=None):
     session.run(tf.global_variables_initializer())
 
     # Reset Q and pi to have almost-0 output
-    # q1.reset(session, 0.) # having both Q to 0 may be detrimental
+    # q1.reset(session, 0.) # having both Q seems to perform worse
     # q2.reset(session, 0.)
     pi.reset(session, 0.)
 
@@ -127,8 +131,8 @@ def main(env_name, seed=1, run_name=None):
     paths["done"] = np.empty((int(max_trans),1))
     trans = 0
     data_idx = 0
-    action_noise = NormalActionNoise(mu=np.zeros(act_size), sigma=float(std_noise)*np.ones(act_size))
-    naction_noise = NormalActionNoise(mu=np.zeros(act_size), sigma=float(std_noise_n)*np.ones(act_size))
+    action_noise = NormalActionNoise(mu=np.zeros(act_size), sigma=np.array(std_noise)*np.ones(act_size))
+    naction_noise = NormalActionNoise(mu=np.zeros(act_size), sigma=np.array(std_noise_n)*np.ones(act_size))
 
     logger = LoggerData('td3', env_name, run_name)
     while trans < min_trans + learn_trans:

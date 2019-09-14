@@ -1,5 +1,5 @@
 '''
-This implementation combines A3C and PPO.
+This implementation combines A3C and PPO. See https://arxiv.org/pdf/1707.02286.pdf
 Several agents (workers) collect samples on their own copy of the environment
 with their own policy. Every worker iteration (= one iteration of PPO) the main
 agent (master) gets V and pi updates using the workers gradients, and the workers

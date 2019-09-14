@@ -18,26 +18,27 @@ import itertools
 def moving_average(data, window=4):
     return np.convolve(data, np.ones(int(window)) / float(window), 'same')
 
-def shaded_plot(ax, data, **kw):
+def shaded_plot(ax, data, **kwargs):
     x = np.arange(data.shape[1])
     mu = np.mean(data, axis=0)
     std = np.std(data, axis=0)
     ci = 1.96*std/np.sqrt(data.shape[0])
-    ax.fill_between(x, mu-ci, mu+ci, alpha=0.2, edgecolor="none", linewidth=0, **kw)
-    ax.plot(x, mu, **kw)
+    ax.fill_between(x, mu-ci, mu+ci, alpha=0.2, edgecolor="none", linewidth=0, **kwargs)
+    ax.plot(x, mu, **kwargs)
     ax.margins(x=0)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--c', type=int, help='index of the column to plot', required=True)
     parser.add_argument('--e', type=str, help='name of the environment', required=True)
-    parser.add_argument('--a', nargs='+', type=str, help='list of the algorithms', required=True)
+    parser.add_argument('--a', type=str, help='list of the algorithms', required=True, action='append')
     parser.add_argument('--f', type=str, help='data folder', default='data-trial/')
     parser.add_argument('--t', type=str, help='title', default='')
     parser.add_argument('--x', type=str, help='x-axis label', default='')
     parser.add_argument('--y', type=str, help='y-axis label', default='')
     parser.add_argument('--l', type=str, help='legend names (if empty, the algorithms names will be used)', default='')
     parser.add_argument('--m', type=int, help='moving average window (default 1, not used)', default='1')
+    parser.add_argument('--n', type=int, help='number of trials', default='5')
 
 
     args = parser.parse_args()
@@ -60,7 +61,7 @@ if __name__ == '__main__':
         color = next(palette)
         path = os.path.join(args.f, alg, args.e)
         data = []
-        for i in range(5):
+        for i in range(args.n):
             data_file = os.path.join(path, str(i) + '.dat')
             if not os.path.exists(data_file):
                 print('Missing file! ' + data_file)
@@ -86,4 +87,4 @@ if __name__ == '__main__':
     frame.set_facecolor('white')
     picsize = fig.get_size_inches() / 1.3
     fig.set_size_inches(picsize)
-    plt.savefig(args.e+args.c+".pdf", bbox_inches='tight', pad_inches=0)
+    plt.savefig(args.e+'_'+str(args.c)+".pdf", bbox_inches='tight', pad_inches=0)

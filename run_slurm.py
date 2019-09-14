@@ -67,7 +67,8 @@ for env_name in env_list:
 #SBATCH -c 4
 
 # activate virtual env
-source /home/sp32pudy/myenv/bin/activate
+module load intel python/3.6
+source ../.bashrc
 python3 -m """ + alg_name + """ """ + env_name + """ """ + str(trial) + """ """ + str(trial) + """\
     """
 
