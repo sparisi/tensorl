@@ -58,6 +58,7 @@ def main(env_name, seed=1, run_name=None):
     # Build pi
     pi = MLP([obs, nobs], pi_sizes+[act_size], pi_activations+[None], 'pi') # pi(s)
 
+
     # Bound actions
     act_bound = env.action_space.high
     assert np.all(act_bound == -env.action_space.low)
@@ -75,8 +76,7 @@ def main(env_name, seed=1, run_name=None):
     # Loss functions, gradients and optimizers
     loss_q = tf.reduce_mean(0.5*tf.square( q.output[0] - (rwd + gamma * qt.output[0]) ))
     alpha = tf.placeholder(dtype=precision, name='alpha')
-    alpha_value = 0.1
-    alpha_decay = 0.999999
+    alpha_value = alpha_init
     loss_pi = -tf.reduce_mean(q.output[1] - alpha*0.5*tf.square( q.output[0] - (rwd + gamma * qt.output[0]) ))
 
 

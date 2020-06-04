@@ -3,14 +3,15 @@ import matplotlib
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 plt.ion()
-matplotlib.use('TKagg')
+#matplotlib.use('TKagg')
 
 import numpy as np
 
-class My3DPlot:
+class RT3DPlot:
     '''
     It creates a new figure with two subfigures (surf and contourf + colorbar)
-    and allows to update them with new z-values without creating a new plot.
+    and allows to update them in real time with new z-values without creating a
+    new plot.
     '''
 
     def __init__(self, xmin, xmax, ymin, ymax, title, n=10):
@@ -37,24 +38,4 @@ class My3DPlot:
         self.surf = self.ax_surf.plot_surface(self.xx, self.yy, z.reshape((self.n,self.n)), cmap=cm.coolwarm)
         self.contour = self.ax_contour.contourf(self.xx, self.yy, z.reshape((self.n,self.n)), cmap=cm.coolwarm)
         plt.colorbar(self.contour, cax=self.ax_cbar)
-        plt.draw()
-
-
-
-class My2DScatter:
-    '''
-    It creates a new figure with a scatter plot and allows to update it with new
-    values without creating a new plot.
-    '''
-
-    def __init__(self, title):
-        self.name = 'my2dscatter'
-        self.fig, self.ax = plt.subplots()
-        self.fig.suptitle(title)
-        self.scatter = self.ax.scatter([],[])
-
-    def update(self, x, y, value=None):
-        self.fig.canvas.flush_events()
-        self.ax.cla()
-        self.scatter = self.ax.scatter(x, y, c=value)
         plt.draw()

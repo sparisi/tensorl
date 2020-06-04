@@ -39,6 +39,7 @@ if __name__ == '__main__':
     parser.add_argument('--l', type=str, help='legend names (if empty, the algorithms names will be used)', default='')
     parser.add_argument('--m', type=int, help='moving average window (default 1, not used)', default='1')
     parser.add_argument('--n', type=int, help='number of trials', default='5')
+    parser.add_argument('--r', type=int, help='number of rows to read (default all rows )', default=None)
 
 
     args = parser.parse_args()
@@ -67,7 +68,10 @@ if __name__ == '__main__':
                 print('Missing file! ' + data_file)
                 continue
             data_mat = np.loadtxt(data_file)
-            data.append(data_mat[:,args.c])
+            if args.r is None:
+                data.append(data_mat[:,args.c])
+            else:
+                data.append(data_mat[:args.r,args.c])
         data = np.array(data)
 
         if data.shape[0] == 0:

@@ -84,7 +84,6 @@ def main(checkpoint_path=None):
 
     # prepare Q plot
     myplot = My3DPlot(-20,20,-20,20,"Q-function")
-    myscatter = My2DScatter("MC estimates")
 
     # create file and folder to store data and model
     logger_data = LoggerData('reinforce', env.env.__class__.__name__, 'demo')
@@ -101,7 +100,6 @@ def main(checkpoint_path=None):
 
         avg_rwd = env.env.avg_return(session.run(mean.vars)[0], gamma) # evaluate pi (LQR has a closed form solution if the policy is linear)
         myplot.update(session.run(q.output[0], {obs: np.atleast_2d(myplot.XY[:,0]).T, act: np.atleast_2d(myplot.XY[:,1]).T})) # show Q
-        myscatter.update(paths["obs"], paths["act"], R) # show samples
         print(itr, avg_rwd, flush=True)
 
         with open(logger_data.fullname, 'ab') as f:

@@ -25,7 +25,7 @@ class LoggerData:
         mkdir_p(self.pathname)
 
 class LoggerModel:
-    def __init__(self, alg_name, env_name, run_name=None, ext='.ckpt', log_dir='./model-tf/'):
+    def __init__(self, alg_name, env_name, run_name=None, ext='.ckpt', log_dir='./models-tf/'):
         if run_name is None:
             run_name = datetime.utcnow().strftime("%y%m%d_%H%M%S") # create unique filename
         self.fullname = os.path.join(log_dir, alg_name, env_name, run_name+ext)

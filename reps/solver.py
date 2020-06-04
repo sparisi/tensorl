@@ -1,9 +1,11 @@
 import tensorflow as tf
 import numpy as np
 
+from common.data_collection import *
+
 class REPS:
 
-    def __init__(self, session, epsilon, v, obs, nobs, iobs, rwd, scipy_iter=100, l2reg=0.0, verbose=False):
+    def __init__(self, session, epsilon, v, obs, nobs, iobs, rwd, scipy_iter=100, lrate=1e-4, l2reg=0.0, verbose=False):
         self.verbose = verbose
         self.session = session
         self.epsilon = epsilon
@@ -16,7 +18,6 @@ class REPS:
         self.iobs = iobs
         self.rwd = rwd
         self.adv = self.rwd + self.gamma*self.v.output[1] + (1.-self.gamma)*tf.reduce_mean(self.v.output[2]) - self.v.output[0]
-        # self.adv = tf.square(self.rwd + self.gamma*self.v.output[1] + (1.-self.gamma)*tf.reduce_mean(self.v.output[2]) - self.v.output[0])
         self.w = tf.exp((self.adv - tf.reduce_max(self.adv)) / self.eta)
         self.dual = self.eta * self.epsilon + self.eta * tf.log(tf.reduce_mean(self.w)) + tf.reduce_max(self.adv) + tf.reduce_mean([tf.nn.l2_loss((x)) for x in self.v.vars])*l2reg
         # self.w = tf.exp(tf.clip_by_value(self.adv/self.eta, -700, 700))
@@ -26,10 +27,16 @@ class REPS:
                                               method='SLSQP',
                                               var_list=self.theta+[self.eta],
                                               var_to_bounds={self.eta: (1e-6, 1e6)})
+        self.optimizer_adam = tf.train.AdamOptimizer(lrate).minimize(self.dual, var_list=self.theta+[self.eta])
+        self.optimizer_eta = tf.contrib.opt.ScipyOptimizerInterface(self.dual,
+                                              options={'maxiter': 100, 'disp': False, 'ftol': 0},
+                                              method='SLSQP',
+                                              var_list=[self.eta],
+                                              var_to_bounds={self.eta: (1e-6, 1e6)})
         self.reset_eta = tf.assign(self.eta,1e2)
 
 
-    def optimize(self, obs, nobs, iobs, rwd, gamma):
+    def optimize(self, obs, nobs, iobs, rwd, gamma, epochs=50, batch_size=64):
         dct = {self.obs: obs, self.nobs: nobs, self.rwd: rwd, self.iobs: iobs, self.gamma: gamma}
 
         # self.session.run(self.reset_eta)
@@ -59,6 +66,15 @@ class REPS:
             print('     %e  %e  %e  %e  %e ' % (mu_err, phi_err, eta, dual, msadv))
 
         self.optimizer.minimize(self.session, dct)
+        # for epoch in range(epochs):
+        #     # Perform one epoch of gradient descent on the dataset, divided into mini-batches
+        #     for batch_idx in minibatch_idx_list(batch_size, rwd.shape[0]):
+        #         dct_gd = {self.obs: obs[batch_idx,:],
+        #                   self.nobs: nobs[batch_idx,:],
+        #                   self.rwd: rwd[batch_idx,:],
+        #                   self.iobs: iobs,
+        #                   self.gamma: gamma}
+        #         self.session.run(self.optimizer_adam, dct_gd)
 
         # Compute weights and KL
         w = np.squeeze(self.session.run(self.w, dct))

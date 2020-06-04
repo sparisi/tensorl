@@ -48,7 +48,7 @@ for env_name in env_list:
 #!/bin/bash
 
 # job name
-#SBATCH -J job_name
+#SBATCH -J """ + run_name + """\
 
 # logfiles
 #SBATCH -o """ + logdir + """stdout_""" + run_name + """\
@@ -69,7 +69,7 @@ for env_name in env_list:
 # activate virtual env
 module load intel python/3.6
 source ../.bashrc
-python3 -m """ + alg_name + """ """ + env_name + """ """ + str(trial) + """ """ + str(trial) + """\
+python3 -m """ + alg_name + """ """ + env_name + """ """ + str(trial) + """\
     """
 
         text_file = open('r.sh', "w")

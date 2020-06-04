@@ -20,7 +20,7 @@ import argparse
 import matplotlib.pyplot as plt
 import matplotlib
 plt.ion()
-matplotlib.use('TKagg')
+#matplotlib.use('TKagg')
 import seaborn as sns
 import itertools
 import sys
@@ -56,11 +56,14 @@ if __name__ == '__main__':
                         print('Cannot read', f)
                         continue
                     data = data[np.logical_and(~np.isnan(data), ~np.isinf(data))]
-                    plt.plot(data, color=next(palette), linestyle=next(lines))
+                    plt.plot(data, color=next(palette), alpha=0.7, linestyle=next(lines))
         leg = plt.legend(handles=plt.gca().lines, labels=l, loc='best')
         frame = leg.get_frame()
         frame.set_facecolor('white')
         plt.draw()
+        if len(l) == 0:
+            print('nothing to plot, quit')
+            sys.exit(0)
 
     def handle(event):
         if event.key == 'r' or event.key == 'R':
@@ -88,4 +91,12 @@ if __name__ == '__main__':
     update()
     savepdf()
 
-    input('')
+    while True:
+        command = input('')
+        if command == 'r' or command == 'R':
+            update()
+            print('refreshed')
+        elif command == 'p' or command == 'P':
+            savepdf()
+        else:
+            break
